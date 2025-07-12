@@ -45,13 +45,21 @@ const sendEmailTool = ai.defineTool(
   }
 );
 
+const EmailContentSchema = z.object({
+    subject: z.string(),
+    body: z.string(),
+});
+
 const emailPrompt = ai.definePrompt({
     name: 'welcomeEmailPrompt',
     input: { schema: WelcomeEmailInputSchema.extend({ isStudent: z.boolean(), isAdmin: z.boolean() }) },
-    tools: [sendEmailTool],
-    prompt: `You are an assistant responsible for sending welcome emails to new users of the Campus Cruiser app.
+    output: { schema: EmailContentSchema },
+    prompt: `You are an assistant responsible for creating welcome emails for new users of the Campus Cruiser app.
 A new {{role}} account has been created.
 Generate a friendly and welcoming email to the user with their login credentials.
+The subject of the email should be "Welcome to Campus Cruiser!".
+The body should be formatted in HTML with a professional and clean look.
+
 {{#if isStudent}}
 Include the student's bus details.
 {{/if}}
@@ -68,17 +76,24 @@ Bus Details:
 - Pickup Location: {{pickupLocation}}
 - Pickup Time: {{pickupTime}}
 {{/if}}
-
-Use the sendEmail tool to send the email to the user's email address. The subject of the email should be "Welcome to Campus Cruiser!".
-The body should be formatted in HTML with a professional and clean look.
 `,
 });
 
 export async function sendWelcomeEmail(input: WelcomeEmailInput) {
-  const {output} = await emailPrompt({
-    ...input,
-    isStudent: input.role === 'student',
-    isAdmin: input.role === 'admin',
-  });
-  return output;
+    const { output } = await emailPrompt({
+        ...input,
+        isStudent: input.role === 'student',
+        isAdmin: input.role === 'admin',
+    });
+
+    if (!output) {
+        throw new Error('Failed to generate email content.');
+    }
+    
+    // Now, call the email tool with the generated content
+    return await sendEmailTool({
+        to: input.email,
+        subject: output.subject,
+        body: output.body,
+    });
 }

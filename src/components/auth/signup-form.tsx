@@ -91,8 +91,8 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
       });
       
       toast({
-        title: 'Email Sent',
-        description: `A welcome email has been sent to ${email}.`,
+        title: 'Welcome Email Prepared',
+        description: `An email for ${email} is ready. Implement a mail service to send it.`,
       });
 
 
