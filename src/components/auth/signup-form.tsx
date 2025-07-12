@@ -27,6 +27,7 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
   const [pickupLocation, setPickupLocation] = useState('');
   const [pickupTime, setPickupTime] = useState('');
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,7 +53,7 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
         }
     }
 
-
+    setIsSubmitting(true);
     try {
       const generatedPassword = Math.random().toString(36).slice(-8);
       
@@ -79,7 +80,7 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
       });
 
       // Send the welcome email
-      await sendWelcomeEmail({
+      const emailResult = await sendWelcomeEmail({
         fullName,
         email,
         identifier: role === 'student' ? identifier.toUpperCase() : identifier,
@@ -90,10 +91,18 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
         pickupTime
       });
       
-      toast({
-        title: 'Welcome Email Prepared',
-        description: `An email for ${email} is ready. Implement a mail service to send it.`,
-      });
+      if (emailResult.success) {
+        toast({
+            title: 'Welcome Email Sent',
+            description: `An email has been sent to ${email}.`,
+        });
+      } else {
+         toast({
+            variant: 'destructive',
+            title: 'Email Failed',
+            description: `Could not send welcome email to ${email}. Please check server logs.`,
+        });
+      }
 
 
       // Clear form after successful submission
@@ -114,6 +123,8 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
         title: 'Creation Error',
         description: 'An error occurred. Please try again.',
       });
+    } finally {
+        setIsSubmitting(false);
     }
   };
 
@@ -201,8 +212,8 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
             </>
           )}
 
-          <Button type="submit" className="w-full">
-            Create account
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? 'Creating...' : 'Create account'}
           </Button>
         </form>
       </CardContent>

@@ -8,6 +8,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { sendMail } from '@/lib/mail';
 
 const WelcomeEmailInputSchema = z.object({
   fullName: z.string().describe('The full name of the new user.'),
@@ -21,8 +22,7 @@ const WelcomeEmailInputSchema = z.object({
 });
 export type WelcomeEmailInput = z.infer<typeof WelcomeEmailInputSchema>;
 
-// Placeholder tool for sending an email.
-// In a real application, this would use a service like Nodemailer or a third-party API.
+// This tool now uses a real email service.
 const sendEmailTool = ai.defineTool(
   {
     name: 'sendEmail',
@@ -37,11 +37,12 @@ const sendEmailTool = ai.defineTool(
     }),
   },
   async (input) => {
-    console.log(`Email Tool: Sending email to ${input.to}`);
-    console.log(`Subject: ${input.subject}`);
-    // In a real implementation, you would have your email sending logic here.
-    // For this example, we'll just simulate a successful response.
-    return { success: true };
+    const success = await sendMail({
+      to: input.to,
+      subject: input.subject,
+      html: input.body,
+    });
+    return { success };
   }
 );
 
