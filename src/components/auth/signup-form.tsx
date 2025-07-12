@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
+import { sendWelcomeEmail } from '@/ai/flows/send-welcome-email';
 
 interface SignupFormProps {
   onUserCreated?: () => void;
@@ -43,7 +44,7 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
       const userData: { [key: string]: any } = {
         fullName,
         email,
-        password: generatedPassword, // In a real app, you should hash passwords
+        password: generatedPassword, 
         role,
       };
 
@@ -61,6 +62,25 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
         title: 'User Created',
         description: `Successfully created a new ${role}. Password: ${generatedPassword}`,
       });
+
+      // Send the welcome email
+      await sendWelcomeEmail({
+        fullName,
+        email,
+        identifier: role === 'student' ? identifier.toUpperCase() : identifier,
+        password: generatedPassword,
+        role,
+        busNumber,
+        pickupLocation,
+        pickupTime
+      });
+      
+      toast({
+        title: 'Email Sent',
+        description: `A welcome email has been sent to ${email}.`,
+      });
+
+
       // Clear form after successful submission
       setFullName('');
       setIdentifier('');
