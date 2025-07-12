@@ -15,7 +15,8 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { SignupForm } from '@/components/auth/signup-form';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, View } from 'lucide-react';
+import { UserTable } from '@/components/user-table';
 
 // Dummy stops and routes
 const DUMMY_ROUTES: Route[] = [
@@ -78,23 +79,42 @@ export default function HomePage() {
           </div>
         )}
         {user?.role === 'admin' && (
-           <Dialog open={isAddStudentDialogOpen} onOpenChange={setAddStudentDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add Student
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Add a New User</DialogTitle>
-                <DialogDescription>
-                  Create a new student or admin account.
-                </DialogDescription>
-              </DialogHeader>
-              <SignupForm onUserCreated={onUserCreated} />
-            </DialogContent>
-          </Dialog>
+          <div className="flex gap-4">
+            <Dialog open={isAddStudentDialogOpen} onOpenChange={setAddStudentDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add User
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Add a New User</DialogTitle>
+                  <DialogDescription>
+                    Create a new student or admin account.
+                  </DialogDescription>
+                </DialogHeader>
+                <SignupForm onUserCreated={onUserCreated} />
+              </DialogContent>
+            </Dialog>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <View className="mr-2 h-4 w-4" />
+                  View Users
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl">
+                <DialogHeader>
+                  <DialogTitle>User Management</DialogTitle>
+                  <DialogDescription>
+                    View and manage all registered users in the database.
+                  </DialogDescription>
+                </DialogHeader>
+                <UserTable />
+              </DialogContent>
+            </Dialog>
+          </div>
         )}
         <div className="flex gap-4">
           {DUMMY_ROUTES.map((route) => (
