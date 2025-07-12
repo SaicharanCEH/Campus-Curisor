@@ -17,8 +17,8 @@ const containerStyle = {
 
 // Center of your campus
 const defaultCenter = {
-  lat: 17.3056,
-  lng: 78.6212,
+  lat: 17.1966,
+  lng: 78.5961,
 };
 
 export default function MapPlaceholder({

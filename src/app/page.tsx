@@ -15,7 +15,7 @@ const DUMMY_ROUTES: Route[] = [
       { id: 'stop-5', name: 'City Library', position: { lat: 17.4050, lng: 78.5050 } },
       { id: 'stop-6', name: 'Shopping Mall', position: { lat: 17.4100, lng: 78.5100 } },
       { id: 'stop-7', name: 'Residential Area', position: { lat: 17.4150, lng: 78.5150 } },
-      { id: 'stop-8', name: 'CVR College of Engineering', position: { lat: 17.3056, lng: 78.6212 } },
+      { id: 'stop-8', name: 'CVR College of Engineering', position: { lat: 17.1966, lng: 78.5961 } },
     ],
   },
 ];
