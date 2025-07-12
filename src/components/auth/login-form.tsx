@@ -12,8 +12,41 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Bus } from 'lucide-react';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
+
+const mockUsers = {
+  '23B81A62A4': { password: 'admin' },
+  '23B81A62A0': { password: 'admin' },
+  '23B81A05LT': { password: 'admin' },
+};
 
 export function LoginForm() {
+  const [rollNumber, setRollNumber] = useState('');
+  const [password, setPassword] = useState('');
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const user = mockUsers[rollNumber as keyof typeof mockUsers];
+    if (user && user.password === password) {
+      toast({
+        title: 'Login Successful',
+        description: `Welcome, ${rollNumber}!`,
+      });
+      // In a real app, you'd set a session token here
+      router.push('/');
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Login Failed',
+        description: 'Invalid roll number or password.',
+      });
+    }
+  };
+
   return (
     <Card className="mx-auto max-w-sm w-full">
       <CardHeader className="text-center">
@@ -26,7 +59,7 @@ export function LoginForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-4">
+        <form onSubmit={handleSubmit} className="grid gap-4">
           <div className="grid gap-2">
             <Label htmlFor="roll-number">Roll Number</Label>
             <Input
@@ -34,6 +67,8 @@ export function LoginForm() {
               type="text"
               placeholder="e.g., 21B81A0501"
               required
+              value={rollNumber}
+              onChange={(e) => setRollNumber(e.target.value.toUpperCase())}
             />
           </div>
           <div className="grid gap-2">
@@ -46,15 +81,21 @@ export function LoginForm() {
                 Forgot your password?
               </Link>
             </div>
-            <Input id="password" type="password" required />
+            <Input
+              id="password"
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </div>
           <Button type="submit" className="w-full">
             Login
           </Button>
-          <Button variant="outline" className="w-full">
+          <Button variant="outline" className="w-full" type="button">
             Login with Google
           </Button>
-        </div>
+        </form>
         <div className="mt-4 text-center text-sm">
           Don&apos;t have an account?{' '}
           <Link href="/signup" className="underline">
