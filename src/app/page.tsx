@@ -15,7 +15,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { SignupForm } from '@/components/auth/signup-form';
-import { BusPlus, PlusCircle, View } from 'lucide-react';
+import { Bus as BusIcon, PlusCircle, View } from 'lucide-react';
 import { UserTable } from '@/components/user-table';
 import { AddRouteForm } from '@/components/add-route-form';
 import { collection, getDocs } from 'firebase/firestore';
@@ -110,7 +110,7 @@ export default function HomePage() {
              <Dialog open={isAddRouteDialogOpen} onOpenChange={setAddRouteDialogOpen}>
               <DialogTrigger asChild>
                 <Button>
-                  <BusPlus className="mr-2 h-4 w-4" />
+                  <BusIcon className="mr-2 h-4 w-4" />
                   Add Route
                 </Button>
               </DialogTrigger>
