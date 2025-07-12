@@ -22,6 +22,9 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
   const [identifier, setIdentifier] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('student');
+  const [busNumber, setBusNumber] = useState('');
+  const [pickupLocation, setPickupLocation] = useState('');
+  const [pickupTime, setPickupTime] = useState('');
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,7 +33,7 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
       toast({
         variant: 'destructive',
         title: 'Creation Failed',
-        description: 'Please fill out all fields.',
+        description: 'Please fill out all required fields.',
       });
       return;
     }
@@ -48,6 +51,9 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
         userData.username = identifier;
       } else {
         userData.rollNumber = identifier.toUpperCase();
+        userData.busNumber = busNumber;
+        userData.pickupLocation = pickupLocation;
+        userData.pickupTime = pickupTime;
       }
 
       await addDoc(collection(db, 'users'), userData);
@@ -60,6 +66,9 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
       setIdentifier('');
       setEmail('');
       setRole('student');
+      setBusNumber('');
+      setPickupLocation('');
+      setPickupTime('');
 
       onUserCreated?.();
 
@@ -122,6 +131,41 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
+
+          {role === 'student' && (
+            <>
+              <div className="grid gap-2">
+                <Label htmlFor="bus-number">Bus Number</Label>
+                <Input
+                  id="bus-number"
+                  type="text"
+                  placeholder="e.g., 101"
+                  value={busNumber}
+                  onChange={(e) => setBusNumber(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="pickup-location">Pickup Location</Label>
+                <Input
+                  id="pickup-location"
+                  type="text"
+                  placeholder="e.g., Downtown Station"
+                  value={pickupLocation}
+                  onChange={(e) => setPickupLocation(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="pickup-time">Pickup Time</Label>
+                <Input
+                  id="pickup-time"
+                  type="time"
+                  value={pickupTime}
+                  onChange={(e) => setPickupTime(e.target.value)}
+                />
+              </div>
+            </>
+          )}
+
           <Button type="submit" className="w-full">
             Create account
           </Button>
