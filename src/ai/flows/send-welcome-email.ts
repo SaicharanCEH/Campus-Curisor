@@ -45,23 +45,24 @@ const sendEmailTool = ai.defineTool(
   }
 );
 
-
 const emailPrompt = ai.definePrompt({
     name: 'welcomeEmailPrompt',
-    input: { schema: WelcomeEmailInputSchema },
+    input: { schema: WelcomeEmailInputSchema.extend({ isStudent: z.boolean(), isAdmin: z.boolean() }) },
     tools: [sendEmailTool],
     prompt: `You are an assistant responsible for sending welcome emails to new users of the Campus Cruiser app.
 A new {{role}} account has been created.
 Generate a friendly and welcoming email to the user with their login credentials.
-If the user is a student, include their bus details.
+{{#if isStudent}}
+Include the student's bus details.
+{{/if}}
 
 Here is the user's information:
 - Name: {{fullName}}
 - Email: {{email}}
-- Login Identifier ({{#if (eq role 'student')}}Roll Number{{else}}Username{{/if}}): {{identifier}}
+- Login Identifier ({{#if isStudent}}Roll Number{{/if}}{{#if isAdmin}}Username{{/if}}): {{identifier}}
 - Password: {{password}}
 
-{{#if (eq role 'student')}}
+{{#if isStudent}}
 Bus Details:
 - Bus Number: {{busNumber}}
 - Pickup Location: {{pickupLocation}}
@@ -73,8 +74,11 @@ The body should be formatted in HTML with a professional and clean look.
 `,
 });
 
-
 export async function sendWelcomeEmail(input: WelcomeEmailInput) {
-    const {output} = await emailPrompt(input);
-    return output;
+  const {output} = await emailPrompt({
+    ...input,
+    isStudent: input.role === 'student',
+    isAdmin: input.role === 'admin',
+  });
+  return output;
 }
