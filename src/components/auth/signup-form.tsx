@@ -41,7 +41,7 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
     
     // Validate roll number format for students
     if (role === 'student') {
-        const rollNumberRegex = /^\d{2}B8[12]A\d{2}[A-Z0-9]{2}$/i;
+        const rollNumberRegex = /^\d{2}B8[12]A[A-Z0-9]{4}$/i;
         if (!rollNumberRegex.test(identifier)) {
             toast({
                 variant: 'destructive',
