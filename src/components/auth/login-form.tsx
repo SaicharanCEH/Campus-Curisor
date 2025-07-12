@@ -15,12 +15,8 @@ import { Bus } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-
-const mockUsers = {
-  '23B81A62A4': { password: 'admin' },
-  '23B81A62A0': { password: 'admin' },
-  '23B81A05LT': { password: 'admin' },
-};
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export function LoginForm() {
   const [rollNumber, setRollNumber] = useState('');
@@ -28,21 +24,45 @@ export function LoginForm() {
   const { toast } = useToast();
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const user = mockUsers[rollNumber as keyof typeof mockUsers];
-    if (user && user.password === password) {
-      toast({
-        title: 'Login Successful',
-        description: `Welcome, ${rollNumber}!`,
-      });
-      // In a real app, you'd set a session token here
-      router.push('/');
-    } else {
+    try {
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('rollNumber', '==', rollNumber));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        toast({
+          variant: 'destructive',
+          title: 'Login Failed',
+          description: 'Invalid roll number or password.',
+        });
+        return;
+      }
+
+      const userDoc = querySnapshot.docs[0];
+      const userData = userDoc.data();
+
+      if (userData.password === password) {
+        toast({
+          title: 'Login Successful',
+          description: `Welcome, ${userData.fullName}!`,
+        });
+        // In a real app, you'd set a session token here
+        router.push('/');
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Login Failed',
+          description: 'Invalid roll number or password.',
+        });
+      }
+    } catch (error) {
+      console.error('Error logging in:', error);
       toast({
         variant: 'destructive',
-        title: 'Login Failed',
-        description: 'Invalid roll number or password.',
+        title: 'Login Error',
+        description: 'An error occurred during login. Please try again.',
       });
     }
   };
