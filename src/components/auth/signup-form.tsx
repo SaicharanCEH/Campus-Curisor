@@ -4,9 +4,6 @@ import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,13 +21,12 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
   const [fullName, setFullName] = useState('');
   const [identifier, setIdentifier] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [role, setRole] = useState('student');
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName || !identifier || !email || !password) {
+    if (!fullName || !identifier || !email) {
       toast({
         variant: 'destructive',
         title: 'Creation Failed',
@@ -39,10 +35,12 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
       return;
     }
     try {
+      const generatedPassword = Math.random().toString(36).slice(-8);
+      
       const userData: { [key: string]: any } = {
         fullName,
         email,
-        password, // In a real app, you should hash passwords
+        password: generatedPassword, // In a real app, you should hash passwords
         role,
       };
 
@@ -55,13 +53,12 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
       await addDoc(collection(db, 'users'), userData);
       toast({
         title: 'User Created',
-        description: `Successfully created a new ${role} account.`,
+        description: `Successfully created a new ${role}. Password: ${generatedPassword}`,
       });
       // Clear form after successful submission
       setFullName('');
       setIdentifier('');
       setEmail('');
-      setPassword('');
       setRole('student');
 
       onUserCreated?.();
@@ -123,16 +120,6 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="password">Password</Label>
-            <Input 
-              id="password" 
-              type="password" 
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
             />
           </div>
           <Button type="submit" className="w-full">
