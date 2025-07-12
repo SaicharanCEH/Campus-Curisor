@@ -22,17 +22,17 @@ export function LoginForm() {
         </div>
         <CardTitle className="text-2xl font-headline">Welcome to Campus Cruiser</CardTitle>
         <CardDescription>
-          Enter your email below to login to your account
+          Enter your roll number below to login to your account
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="roll-number">Roll Number</Label>
             <Input
-              id="email"
-              type="email"
-              placeholder="m@example.com"
+              id="roll-number"
+              type="text"
+              placeholder="e.g., 21B81A0501"
               required
             />
           </div>
