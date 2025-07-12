@@ -43,10 +43,11 @@ export function LoginForm() {
 
       const usersRef = collection(db, 'users');
       const fieldToQuery = role === 'admin' ? 'username' : 'rollNumber';
+      const valueToQuery = role === 'student' ? identifier.toUpperCase() : identifier;
 
       const q = query(
         usersRef,
-        where(fieldToQuery, '==', identifier),
+        where(fieldToQuery, '==', valueToQuery),
         where('role', '==', role)
       );
       const querySnapshot = await getDocs(q);
@@ -123,7 +124,7 @@ export function LoginForm() {
               placeholder={role === 'admin' ? 'e.g., adminuser' : 'e.g., 21B81A0501'}
               required
               value={identifier}
-              onChange={(e) => setIdentifier(role === 'student' ? e.target.value.toUpperCase() : e.target.value)}
+              onChange={(e) => setIdentifier(e.target.value)}
             />
           </div>
           <div className="grid gap-2">

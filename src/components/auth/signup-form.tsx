@@ -38,6 +38,21 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
       });
       return;
     }
+    
+    // Validate roll number format for students
+    if (role === 'student') {
+        const rollNumberRegex = /^\d{2}B8[12]A\d{4}$/i;
+        if (!rollNumberRegex.test(identifier)) {
+            toast({
+                variant: 'destructive',
+                title: 'Invalid Roll Number',
+                description: 'Please enter a valid roll number format (e.g., 23B81A62A4).',
+            });
+            return;
+        }
+    }
+
+
     try {
       const generatedPassword = Math.random().toString(36).slice(-8);
       
