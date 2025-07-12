@@ -17,8 +17,8 @@ const containerStyle = {
 
 // Center of your campus
 const defaultCenter = {
-  lat: 17.3871, // Example: Hyderabad coordinates
-  lng: 78.4917,
+  lat: 17.3056,
+  lng: 78.6212,
 };
 
 export default function MapPlaceholder({
