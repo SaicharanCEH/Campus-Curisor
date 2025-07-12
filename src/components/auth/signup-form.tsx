@@ -33,7 +33,7 @@ export function SignupForm() {
     if (!fullName || !identifier || !email || !password) {
       toast({
         variant: 'destructive',
-        title: 'Signup Failed',
+        title: 'Creation Failed',
         description: 'Please fill out all fields.',
       });
       return;
@@ -54,32 +54,35 @@ export function SignupForm() {
 
       await addDoc(collection(db, 'users'), userData);
       toast({
-        title: 'Signup Successful',
-        description: 'Your account has been created. Please login.',
+        title: 'User Created',
+        description: `Successfully created a new ${role} account.`,
       });
-      router.push('/login');
+      // Clear form after successful submission
+      setFullName('');
+      setIdentifier('');
+      setEmail('');
+      setPassword('');
+      setRole('student');
+
     } catch (error) {
       console.error('Error adding document: ', error);
       toast({
         variant: 'destructive',
-        title: 'Signup Error',
+        title: 'Creation Error',
         description: 'An error occurred. Please try again.',
       });
     }
   };
 
   return (
-    <Card className="mx-auto max-w-sm w-full">
-      <CardHeader className="text-center">
-        <div className="flex justify-center items-center mb-4">
-            <Bus className="h-8 w-8 text-primary" />
-        </div>
-        <CardTitle className="text-2xl font-headline">Create an Account</CardTitle>
+    <Card className="mx-auto max-w-sm w-full border-0 shadow-none">
+      <CardHeader className="text-center px-0">
+        <CardTitle className="text-2xl font-headline">Create a New User</CardTitle>
         <CardDescription>
-          Enter your information to get started with Campus Cruiser
+          Enter user information to create a new account.
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-0">
         <form onSubmit={handleSubmit} className="grid gap-4">
           <div className="grid gap-2">
             <Label>Register as</Label>
@@ -137,15 +140,9 @@ export function SignupForm() {
             />
           </div>
           <Button type="submit" className="w-full">
-            Create an account
+            Create account
           </Button>
         </form>
-        <div className="mt-4 text-center text-sm">
-          Already have an account?{' '}
-          <Link href="/login" className="underline">
-            Login
-          </Link>
-        </div>
       </CardContent>
     </Card>
   );
