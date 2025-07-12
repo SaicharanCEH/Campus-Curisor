@@ -15,34 +15,23 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { SignupForm } from '@/components/auth/signup-form';
-import { PlusCircle, View } from 'lucide-react';
+import { BusPlus, PlusCircle, View } from 'lucide-react';
 import { UserTable } from '@/components/user-table';
-
-// Dummy stops and routes
-const DUMMY_ROUTES: Route[] = [
-  {
-    id: 'route-2',
-    name: 'College Express',
-    stops: [
-      { id: 'stop-4', name: 'Downtown Station', position: { lat: 17.4000, lng: 78.5000 } },
-      { id: 'stop-5', name: 'City Library', position: { lat: 17.4050, lng: 78.5050 } },
-      { id: 'stop-6', name: 'Shopping Mall', position: { lat: 17.4100, lng: 78.5100 } },
-      { id: 'stop-7', name: 'Residential Area', position: { lat: 17.4150, lng: 78.5150 } },
-      { id: 'stop-8', name: 'CVR College of Engineering', position: { lat: 17.1966, lng: 78.5961 } },
-    ],
-  },
-];
+import { AddRouteForm } from '@/components/add-route-form';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 const DUMMY_BUSES: Bus[] = [
   { id: 'bus-3', routeId: 'route-2', position: { lat: 17.4025, lng: 78.5025 } },
   { id: 'bus-4', routeId: 'route-2', position: { lat: 17.4125, lng: 78.5125 } },
 ];
 
-
 export default function HomePage() {
-  const [selectedRoute, setSelectedRoute] = useState<Route | null>(DUMMY_ROUTES[0]);
+  const [routes, setRoutes] = useState<Route[]>([]);
+  const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
   const [user, setUser] = useState<{ fullName: string; role: string } | null>(null);
   const [isAddStudentDialogOpen, setAddStudentDialogOpen] = useState(false);
+  const [isAddRouteDialogOpen, setAddRouteDialogOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -50,8 +39,19 @@ export default function HomePage() {
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
+    
+    const fetchRoutes = async () => {
+      const routesCollection = collection(db, 'routes');
+      const routeSnapshot = await getDocs(routesCollection);
+      const routesList = routeSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Route));
+      setRoutes(routesList);
+      if (routesList.length > 0) {
+        setSelectedRoute(routesList[0]);
+      }
+    };
+    fetchRoutes();
   }, []);
-
+  
   const handleLogout = () => {
     localStorage.removeItem('user');
     setUser(null);
@@ -62,10 +62,20 @@ export default function HomePage() {
     console.log('Selected stop:', stop);
     alert(`Selected stop: ${stop.name}`);
   };
-  
+
   const onUserCreated = () => {
     setAddStudentDialogOpen(false);
-  }
+  };
+
+  const onRouteCreated = async () => {
+    setAddRouteDialogOpen(false);
+    // Refetch routes
+    const routesCollection = collection(db, 'routes');
+    const routeSnapshot = await getDocs(routesCollection);
+    const routesList = routeSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Route));
+    setRoutes(routesList);
+  };
+
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -97,6 +107,23 @@ export default function HomePage() {
                 <SignupForm onUserCreated={onUserCreated} />
               </DialogContent>
             </Dialog>
+             <Dialog open={isAddRouteDialogOpen} onOpenChange={setAddRouteDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <BusPlus className="mr-2 h-4 w-4" />
+                  Add Route
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Add a New Bus Route</DialogTitle>
+                  <DialogDescription>
+                    Define a new route with its name and stops.
+                  </DialogDescription>
+                </DialogHeader>
+                <AddRouteForm onRouteCreated={onRouteCreated} />
+              </DialogContent>
+            </Dialog>
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline">
@@ -117,7 +144,7 @@ export default function HomePage() {
           </div>
         )}
         <div className="flex gap-4">
-          {DUMMY_ROUTES.map((route) => (
+          {routes.map((route) => (
             <button
               key={route.id}
               onClick={() => setSelectedRoute(route)}
