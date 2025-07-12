@@ -13,8 +13,8 @@ import { ScrollArea } from './ui/scroll-area';
 
 interface Stop {
   name: string;
-  lat: number;
-  lng: number;
+  location: string;
+  time: string;
 }
 
 interface AddRouteFormValues {
@@ -39,7 +39,7 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
       busNumber: '',
       driverName: '',
       driverMobile: '',
-      stops: [{ name: '', lat: 0, lng: 0 }],
+      stops: [{ name: '', location: '', time: '' }],
     },
   });
 
@@ -59,10 +59,8 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
         stops: data.stops.map(stop => ({
           id: `${data.name.replace(/\s+/g, '-').toLowerCase()}-${stop.name.replace(/\s+/g, '-').toLowerCase()}-${Math.random().toString(36).substr(2, 5)}`,
           name: stop.name,
-          position: {
-            lat: Number(stop.lat),
-            lng: Number(stop.lng),
-          },
+          location: stop.location,
+          time: stop.time,
         })),
       };
 
@@ -144,23 +142,19 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
                   />
                 </div>
                 <div className="col-span-6 sm:col-span-3">
-                  <Label htmlFor={`stops.${index}.lat`} className="text-xs">Latitude</Label>
+                  <Label htmlFor={`stops.${index}.location`} className="text-xs">Location</Label>
                   <Input
-                    id={`stops.${index}.lat`}
-                    type="number"
-                    step="any"
-                    placeholder="17.1966"
-                    {...register(`stops.${index}.lat` as const, { required: true, valueAsNumber: true })}
+                    id={`stops.${index}.location`}
+                    placeholder="e.g., Main Gate"
+                    {...register(`stops.${index}.location` as const, { required: true })}
                   />
                 </div>
                 <div className="col-span-6 sm:col-span-3">
-                  <Label htmlFor={`stops.${index}.lng`} className="text-xs">Longitude</Label>
+                  <Label htmlFor={`stops.${index}.time`} className="text-xs">Time</Label>
                   <Input
-                    id={`stops.${index}.lng`}
-                    type="number"
-                    step="any"
-                    placeholder="78.5961"
-                    {...register(`stops.${index}.lng` as const, { required: true, valueAsNumber: true })}
+                    id={`stops.${index}.time`}
+                    type="time"
+                    {...register(`stops.${index}.time` as const, { required: true })}
                   />
                 </div>
                 <div className="col-span-12 sm:col-span-2 flex items-end">
@@ -178,7 +172,7 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
         <Button
           type="button"
           variant="outline"
-          onClick={() => append({ name: '', lat: 0, lng: 0 })}
+          onClick={() => append({ name: '', location: '', time: '' })}
         >
           <PlusCircle className="mr-2 h-4 w-4" />
           Add Stop
