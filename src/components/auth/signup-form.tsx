@@ -41,12 +41,12 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
     
     // Validate roll number format for students
     if (role === 'student') {
-        const rollNumberRegex = /^\d{2}B8[12]A\d{4}$/i;
+        const rollNumberRegex = /^\d{2}B8[12]A\d{2}[A-Z0-9]{2}$/i;
         if (!rollNumberRegex.test(identifier)) {
             toast({
                 variant: 'destructive',
                 title: 'Invalid Roll Number',
-                description: 'Please enter a valid roll number format (e.g., 23B81A62A4).',
+                description: 'Please enter a valid roll number format (e.g., 23B81A05LT).',
             });
             return;
         }
@@ -149,7 +149,7 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
             <Input
               id="identifier"
               type="text"
-              placeholder={role === 'admin' ? 'e.g., adminuser' : 'e.g., 23B81A62A4'}
+              placeholder={role === 'admin' ? 'e.g., adminuser' : 'e.g., 23B81A05LT'}
               required
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
