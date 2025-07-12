@@ -36,12 +36,17 @@ const sendEmailTool = ai.defineTool(
     }),
   },
   async (input) => {
-    const success = await sendMail({
-      to: input.to,
-      subject: input.subject,
-      html: input.body,
-    });
-    return { success };
+    try {
+        await sendMail({
+            to: input.to,
+            subject: input.subject,
+            html: input.body,
+        });
+        return { success: true };
+    } catch (error) {
+        console.error("sendEmailTool failed:", error);
+        return { success: false };
+    }
   }
 );
 
@@ -81,12 +86,14 @@ export async function sendWelcomeEmail(input: WelcomeEmailInput): Promise<{ succ
         isAdmin: input.role === 'admin',
     });
 
-    if (!output) {
+    if (!output || !output.toolCalls || output.toolCalls.length === 0) {
+      console.error("Email prompt did not generate a tool call.");
       return { success: false };
     }
     
     // The tool call is now handled by the LLM, so we check the tool output
     const toolOutput = output.toolCalls[0]?.output;
+    
     if (toolOutput?.success) {
       return { success: true };
     }

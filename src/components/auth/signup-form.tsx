@@ -100,7 +100,7 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
          toast({
             variant: 'destructive',
             title: 'Email Failed',
-            description: `Could not send welcome email to ${email}. Please check server logs.`,
+            description: `Could not send welcome email to ${email}.`,
         });
       }
 
