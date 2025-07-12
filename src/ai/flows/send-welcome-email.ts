@@ -22,11 +22,10 @@ const WelcomeEmailInputSchema = z.object({
 });
 export type WelcomeEmailInput = z.infer<typeof WelcomeEmailInputSchema>;
 
-// This tool now uses a real email service.
 const sendEmailTool = ai.defineTool(
   {
     name: 'sendEmail',
-    description: 'Sends an email to a specified recipient.',
+    description: 'Sends an email to a specified recipient with their login credentials.',
     inputSchema: z.object({
       to: z.string().email().describe('The email address of the recipient.'),
       subject: z.string().describe('The subject of the email.'),
@@ -46,23 +45,18 @@ const sendEmailTool = ai.defineTool(
   }
 );
 
-const EmailContentSchema = z.object({
-    subject: z.string(),
-    body: z.string(),
-});
 
 const emailPrompt = ai.definePrompt({
     name: 'welcomeEmailPrompt',
+    tools: [sendEmailTool],
     input: { schema: WelcomeEmailInputSchema.extend({ isStudent: z.boolean(), isAdmin: z.boolean() }) },
-    output: { schema: EmailContentSchema },
-    prompt: `You are an assistant responsible for creating welcome emails for new users of the Campus Cruiser app.
+    prompt: `You are an assistant responsible for creating and sending welcome emails for new users of the Campus Cruiser app.
 A new {{role}} account has been created.
-Generate a friendly and welcoming email to the user with their login credentials.
-The subject of the email should be "Welcome to Campus Cruiser!".
-The body should be formatted in HTML with a professional and clean look.
+First, generate a friendly and welcoming email to the user with their login credentials. The subject of the email should be "Welcome to Campus Cruiser!". The body should be formatted in HTML with a professional and clean look.
+Then, use the sendEmail tool to send this email to the user.
 
 {{#if isStudent}}
-Include the student's bus details.
+Include the student's bus details in the email body.
 {{/if}}
 
 Here is the user's information:
@@ -80,21 +74,22 @@ Bus Details:
 `,
 });
 
-export async function sendWelcomeEmail(input: WelcomeEmailInput) {
-    const { output } = await emailPrompt({
+export async function sendWelcomeEmail(input: WelcomeEmailInput): Promise<{ success: boolean }> {
+    const {output} = await emailPrompt({
         ...input,
         isStudent: input.role === 'student',
         isAdmin: input.role === 'admin',
     });
 
     if (!output) {
-        throw new Error('Failed to generate email content.');
+      return { success: false };
     }
     
-    // Now, call the email tool with the generated content
-    return await sendEmailTool({
-        to: input.email,
-        subject: output.subject,
-        body: output.body,
-    });
+    // The tool call is now handled by the LLM, so we check the tool output
+    const toolOutput = output.toolCalls[0]?.output;
+    if (toolOutput?.success) {
+      return { success: true };
+    }
+    
+    return { success: false };
 }
