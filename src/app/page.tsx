@@ -7,15 +7,6 @@ import type { Bus, Route, Stop } from '@/types';
 
 // Dummy stops and routes
 const DUMMY_ROUTES: Route[] = [
-  {
-    id: 'route-1',
-    name: 'Main Campus Loop',
-    stops: [
-      { id: 'stop-1', name: 'Main Gate', position: { lat: 17.3871, lng: 78.4917 } },
-      { id: 'stop-2', name: 'Library', position: { lat: 17.3885, lng: 78.4925 } },
-      { id: 'stop-3', name: 'Cafeteria', position: { lat: 17.3895, lng: 78.4905 } },
-    ],
-  },
  {
     id: 'route-2',
     name: 'College Express',
@@ -30,8 +21,8 @@ const DUMMY_ROUTES: Route[] = [
 ];
 
 const DUMMY_BUSES: Bus[] = [
-  { id: 'bus-1', routeId: 'route-1', position: { lat: 17.3875, lng: 78.4910 } },
-  { id: 'bus-2', routeId: 'route-1', position: { lat: 17.3880, lng: 78.4920 } },
+  { id: 'bus-3', routeId: 'route-2', position: { lat: 17.4025, lng: 78.5025 } },
+  { id: 'bus-4', routeId: 'route-2', position: { lat: 17.4125, lng: 78.5125 } },
 ];
 
 
@@ -55,7 +46,7 @@ export default function HomePage() {
               key={route.id}
               onClick={() => setSelectedRoute(route)}
               className={`px-4 py-2 rounded ${
-                selectedRoute?.id === route.id ? 'bg-blue-600 text-white' : 'bg-gray-200'
+                selectedRoute?.id === route.id ? 'bg-primary text-white' : 'bg-gray-200'
               }`}
             >
               {route.name}
@@ -65,7 +56,7 @@ export default function HomePage() {
 
       </main>
       <MapPlaceholder
-        buses={DUMMY_BUSES}
+        buses={DUMMY_BUSES.filter(bus => bus.routeId === selectedRoute?.id)}
         selectedRoute={selectedRoute}
         onSelectStop={handleStopSelect}
       />

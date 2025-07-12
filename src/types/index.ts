@@ -1,8 +1,7 @@
 export interface Stop {
   id: string;
   name: string;
-  position: { top: string; left: string };
-  eta: string;
+  position: { lat: number; lng: number };
 }
 
 export interface Route {
@@ -14,5 +13,5 @@ export interface Route {
 export interface Bus {
   id: string;
   routeId: string;
-  position: { top: string; left: string };
+  position: { lat: number; lng: number };
 }
