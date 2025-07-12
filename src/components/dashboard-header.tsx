@@ -33,6 +33,7 @@ interface DashboardHeaderProps {
 interface SearchResult {
   busRoute: string;
   estimatedArrivalTime: string;
+  stops?: { name: string; eta: string }[]; // Added stops to SearchResult
   confidenceScore: number;
 }
 
@@ -47,13 +48,17 @@ export default function DashboardHeader({
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Assuming any numeric input is a bus number search
     if (!searchQuery.trim()) return;
 
     setIsLoading(true);
     setSearchResult(null);
 
     try {
-      const result = await naturalLanguageBusSearch({ query: searchQuery });
+      // Assuming any numeric input is a bus number search
+      const result = await naturalLanguageBusSearch({
+        query: searchQuery.trim(),
+      });
       setSearchResult(result);
     } catch (error) {
       console.error('Search failed:', error);
@@ -87,24 +92,25 @@ export default function DashboardHeader({
             />
           </div>
         </form>
-        {isLoading && <Skeleton className="w-[300px] h-24 rounded-lg" />}
+        {isLoading && <Skeleton className="w-[300px] h-24 rounded-lg ml-auto" />}
         {!isLoading && searchResult && (
           <Card className="absolute top-20 sm:right-40 md:right-48 lg:right-60 z-50 w-full max-w-sm">
-            <CardHeader>
+            <CardHeader className="pb-2">
               <CardTitle className="text-base">Search Result</CardTitle>
               <CardDescription>
                 Found based on your query: &quot;{searchQuery}&quot;
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p>
+              <p className="mb-2">
                 <strong>Route:</strong> {searchResult.busRoute}
               </p>
-              <p>
-                <strong>ETA:</strong> {searchResult.estimatedArrivalTime}
-              </p>
+              <strong>Stops:</strong>
+              <ul>
+                {searchResult.stops?.map((stop, index) => (<li key={index}>{stop.name} (ETA: {stop.eta})</li>))}
+              </ul>
             </CardContent>
-            <CardFooter className="text-sm text-muted-foreground">
+            <CardFooter className="pt-0 text-sm text-muted-foreground">
               Confidence: {Math.round(searchResult.confidenceScore * 100)}%
             </CardFooter>
           </Card>

@@ -1,61 +1,74 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Sidebar, SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import type { Route, Stop } from '@/types';
-import DashboardHeader from '@/components/dashboard-header';
+import { useState } from 'react';
 import MapPlaceholder from '@/components/map-placeholder';
-import CruiserSidebar from '@/components/cruiser-sidebar';
-import { DUMMY_ROUTES, DUMMY_BUSES } from '@/lib/data';
+import DashboardHeader from '@/components/dashboard-header';
+import type { Bus, Route, Stop } from '@/types';
 
-export default function Home() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+// Dummy stops and routes
+const DUMMY_ROUTES: Route[] = [
+  {
+    id: 'route-1',
+    name: 'Main Campus Loop',
+    stops: [
+      { id: 'stop-1', name: 'Main Gate', position: { lat: 17.3871, lng: 78.4917 } },
+      { id: 'stop-2', name: 'Library', position: { lat: 17.3885, lng: 78.4925 } },
+      { id: 'stop-3', name: 'Cafeteria', position: { lat: 17.3895, lng: 78.4905 } },
+    ],
+  },
+ {
+    id: 'route-2',
+    name: 'College Express',
+    stops: [
+      { id: 'stop-4', name: 'Downtown Station', position: { lat: 17.4000, lng: 78.5000 } },
+      { id: 'stop-5', name: 'City Library', position: { lat: 17.4050, lng: 78.5050 } },
+      { id: 'stop-6', name: 'Shopping Mall', position: { lat: 17.4100, lng: 78.5100 } },
+      { id: 'stop-7', name: 'Residential Area', position: { lat: 17.4150, lng: 78.5150 } },
+      { id: 'stop-8', name: 'College', position: { lat: 17.4200, lng: 78.5200 } },
+    ],
+  },
+];
+
+const DUMMY_BUSES: Bus[] = [
+  { id: 'bus-1', routeId: 'route-1', position: { lat: 17.3875, lng: 78.4910 } },
+  { id: 'bus-2', routeId: 'route-1', position: { lat: 17.3880, lng: 78.4920 } },
+];
+
+
+export default function HomePage() {
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(DUMMY_ROUTES[0]);
-  const [selectedStop, setSelectedStop] = useState<Stop | null>(null);
-  const [favoriteStops, setFavoriteStops] = useState<string[]>(['stop-101', 'stop-203']);
 
-  const toggleFavorite = (stopId: string) => {
-    setFavoriteStops((prev) =>
-      prev.includes(stopId)
-        ? prev.filter((id) => id !== stopId)
-        : [...prev, stopId]
-    );
+  const handleStopSelect = (stop: Stop) => {
+    console.log('Selected stop:', stop);
+    alert(`Selected stop: ${stop.name}`);
   };
 
   return (
-    <SidebarProvider>
-      <div className="flex h-screen w-full flex-col">
-        <DashboardHeader 
-          isAuthenticated={isAuthenticated} 
-          onLogout={() => setIsAuthenticated(false)} 
-        />
-        <div className="flex flex-1 overflow-hidden">
-          <Sidebar
-            variant="sidebar"
-            collapsible="icon"
-            className="w-80 border-r"
-          >
-            <CruiserSidebar
-              routes={DUMMY_ROUTES}
-              selectedRoute={selectedRoute}
-              onSelectRoute={setSelectedRoute}
-              selectedStop={selectedStop}
-              onSelectStop={setSelectedStop}
-              favoriteStops={favoriteStops}
-              onToggleFavorite={toggleFavorite}
-            />
-          </Sidebar>
-          <SidebarInset className="flex-1 overflow-y-auto bg-background">
-            <main className="p-4 md:p-6 h-full">
-              <MapPlaceholder 
-                buses={DUMMY_BUSES}
-                selectedRoute={selectedRoute}
-                onSelectStop={setSelectedStop}
-              />
-            </main>
-          </SidebarInset>
+    <div className="flex flex-col min-h-screen">
+      <DashboardHeader isAuthenticated={false} onLogout={() => {}} />
+      <main className="flex flex-1 flex-col items-center justify-center gap-6 p-8">
+        <h1 className="text-2xl font-bold">Campus Cruiser 🚌</h1>
+
+        <div className="flex gap-4">
+          {DUMMY_ROUTES.map((route) => (
+            <button
+              key={route.id}
+              onClick={() => setSelectedRoute(route)}
+              className={`px-4 py-2 rounded ${
+                selectedRoute?.id === route.id ? 'bg-blue-600 text-white' : 'bg-gray-200'
+              }`}
+            >
+              {route.name}
+            </button>
+          ))}
         </div>
-      </div>
-    </SidebarProvider>
+
+      </main>
+      <MapPlaceholder
+        buses={DUMMY_BUSES}
+        selectedRoute={selectedRoute}
+        onSelectStop={handleStopSelect}
+      />
+    </div>
   );
 }

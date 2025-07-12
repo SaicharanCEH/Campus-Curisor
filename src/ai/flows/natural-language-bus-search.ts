@@ -28,6 +28,10 @@ const NaturalLanguageBusSearchOutputSchema = z.object({
     .describe(
       'A score between 0 and 1 indicating the confidence level of the search result.'
     ),
+  stops: z.array(z.object({
+    name: z.string().describe('The name of the bus stop.'),
+    eta: z.string().describe('The estimated time of arrival at this stop.'),
+  })).optional().describe('A list of stops on the route with their ETAs.'),
 });
 export type NaturalLanguageBusSearchOutput = z.infer<
   typeof NaturalLanguageBusSearchOutputSchema
@@ -45,11 +49,11 @@ const prompt = ai.definePrompt({
   output: {schema: NaturalLanguageBusSearchOutputSchema},
   prompt: `You are a helpful assistant that provides bus route information based on natural language queries.
 
-  Given the following query, extract the bus route and estimated arrival time.
+  Given the following query, extract the bus route, estimated arrival time, and a list of stops with their ETAs if available.
 
   Query: {{{query}}}
 
-  Respond with the bus route, estimated arrival time, and a confidence score (0-1) indicating the accuracy of the match.
+  Respond with the bus route, estimated arrival time, a list of stops, and a confidence score (0-1) indicating the accuracy of the match.
   Format your repsonse as a JSON object.
   `,
 });
