@@ -63,6 +63,7 @@ export function UserTable() {
             <TableHead>Email</TableHead>
             <TableHead>Role</TableHead>
             <TableHead>Identifier</TableHead>
+            <TableHead>Password</TableHead>
             <TableHead>Bus Number</TableHead>
             <TableHead>Pickup</TableHead>
           </TableRow>
@@ -74,6 +75,7 @@ export function UserTable() {
               <TableCell>{user.email}</TableCell>
               <TableCell>{user.role}</TableCell>
               <TableCell>{user.role === 'student' ? user.rollNumber : user.username}</TableCell>
+              <TableCell>{user.password}</TableCell>
               <TableCell>{user.busNumber || 'N/A'}</TableCell>
               <TableCell>{user.pickupLocation ? `${user.pickupLocation} at ${user.pickupTime}` : 'N/A'}</TableCell>
             </TableRow>
