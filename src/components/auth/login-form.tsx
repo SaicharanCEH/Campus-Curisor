@@ -20,7 +20,7 @@ import { db } from '@/lib/firebase';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 export function LoginForm() {
-  const [rollNumber, setRollNumber] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('student');
   const { toast } = useToast();
@@ -30,9 +30,11 @@ export function LoginForm() {
     e.preventDefault();
     try {
       const usersRef = collection(db, 'users');
+      const fieldToQuery = role === 'admin' ? 'username' : 'rollNumber';
+
       const q = query(
         usersRef,
-        where('rollNumber', '==', rollNumber),
+        where(fieldToQuery, '==', identifier),
         where('role', '==', role)
       );
       const querySnapshot = await getDocs(q);
@@ -83,7 +85,7 @@ export function LoginForm() {
         </div>
         <CardTitle className="text-2xl font-headline">Welcome to Campus Cruiser</CardTitle>
         <CardDescription>
-          Enter your roll number to login to your account
+          Enter your credentials to login to your account
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -102,14 +104,14 @@ export function LoginForm() {
             </RadioGroup>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="roll-number">Roll Number</Label>
+            <Label htmlFor="identifier">{role === 'admin' ? 'Username' : 'Roll Number'}</Label>
             <Input
-              id="roll-number"
+              id="identifier"
               type="text"
-              placeholder="e.g., 21B81A0501"
+              placeholder={role === 'admin' ? 'e.g., adminuser' : 'e.g., 21B81A0501'}
               required
-              value={rollNumber}
-              onChange={(e) => setRollNumber(e.target.value.toUpperCase())}
+              value={identifier}
+              onChange={(e) => setIdentifier(role === 'student' ? e.target.value.toUpperCase() : e.target.value)}
             />
           </div>
           <div className="grid gap-2">

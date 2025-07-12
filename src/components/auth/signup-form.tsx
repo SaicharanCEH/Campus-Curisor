@@ -21,7 +21,7 @@ import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 
 export function SignupForm() {
   const [fullName, setFullName] = useState('');
-  const [rollNumber, setRollNumber] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('student');
@@ -30,7 +30,7 @@ export function SignupForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName || !rollNumber || !email || !password) {
+    if (!fullName || !identifier || !email || !password) {
       toast({
         variant: 'destructive',
         title: 'Signup Failed',
@@ -39,13 +39,20 @@ export function SignupForm() {
       return;
     }
     try {
-      await addDoc(collection(db, 'users'), {
+      const userData: { [key: string]: any } = {
         fullName,
-        rollNumber: rollNumber.toUpperCase(),
         email,
         password, // In a real app, you should hash passwords
         role,
-      });
+      };
+
+      if (role === 'admin') {
+        userData.username = identifier;
+      } else {
+        userData.rollNumber = identifier.toUpperCase();
+      }
+
+      await addDoc(collection(db, 'users'), userData);
       toast({
         title: 'Signup Successful',
         description: 'Your account has been created. Please login.',
@@ -98,14 +105,14 @@ export function SignupForm() {
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="roll-number">Roll Number</Label>
+            <Label htmlFor="identifier">{role === 'admin' ? 'Username' : 'Roll Number'}</Label>
             <Input
-              id="roll-number"
+              id="identifier"
               type="text"
-              placeholder="e.g., 23B81A62A4"
+              placeholder={role === 'admin' ? 'e.g., adminuser' : 'e.g., 23B81A62A4'}
               required
-              value={rollNumber}
-              onChange={(e) => setRollNumber(e.target.value)}
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
             />
           </div>
           <div className="grid gap-2">
