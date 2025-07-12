@@ -17,10 +17,12 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 export function LoginForm() {
   const [rollNumber, setRollNumber] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('student');
   const { toast } = useToast();
   const router = useRouter();
 
@@ -28,14 +30,18 @@ export function LoginForm() {
     e.preventDefault();
     try {
       const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('rollNumber', '==', rollNumber));
+      const q = query(
+        usersRef,
+        where('rollNumber', '==', rollNumber),
+        where('role', '==', role)
+      );
       const querySnapshot = await getDocs(q);
 
       if (querySnapshot.empty) {
         toast({
           variant: 'destructive',
           title: 'Login Failed',
-          description: 'Invalid roll number or password.',
+          description: 'Invalid credentials or role.',
         });
         return;
       }
@@ -48,13 +54,15 @@ export function LoginForm() {
           title: 'Login Successful',
           description: `Welcome, ${userData.fullName}!`,
         });
-        // In a real app, you'd set a session token here
+        
+        localStorage.setItem('user', JSON.stringify({ fullName: userData.fullName, role: userData.role }));
+
         router.push('/');
       } else {
         toast({
           variant: 'destructive',
           title: 'Login Failed',
-          description: 'Invalid roll number or password.',
+          description: 'Invalid credentials or role.',
         });
       }
     } catch (error) {
@@ -75,11 +83,24 @@ export function LoginForm() {
         </div>
         <CardTitle className="text-2xl font-headline">Welcome to Campus Cruiser</CardTitle>
         <CardDescription>
-          Enter your roll number below to login to your account
+          Enter your roll number to login to your account
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="grid gap-4">
+          <div className="grid gap-2">
+            <Label>Login as</Label>
+            <RadioGroup defaultValue="student" onValueChange={setRole} value={role} className="flex gap-4">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="student" id="student" />
+                <Label htmlFor="student">Student</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="admin" id="admin" />
+                <Label htmlFor="admin">Admin</Label>
+              </div>
+            </RadioGroup>
+          </div>
           <div className="grid gap-2">
             <Label htmlFor="roll-number">Roll Number</Label>
             <Input
@@ -111,9 +132,6 @@ export function LoginForm() {
           </div>
           <Button type="submit" className="w-full">
             Login
-          </Button>
-          <Button variant="outline" className="w-full" type="button">
-            Login with Google
           </Button>
         </form>
         <div className="mt-4 text-center text-sm">

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import MapPlaceholder from '@/components/map-placeholder';
 import DashboardHeader from '@/components/dashboard-header';
 import type { Bus, Route, Stop } from '@/types';
+import { useRouter } from 'next/navigation';
 
 // Dummy stops and routes
 const DUMMY_ROUTES: Route[] = [
@@ -28,6 +29,21 @@ const DUMMY_BUSES: Bus[] = [
 
 export default function HomePage() {
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(DUMMY_ROUTES[0]);
+  const [user, setUser] = useState<{ fullName: string; role: string } | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    setUser(null);
+    router.push('/login');
+  };
 
   const handleStopSelect = (stop: Stop) => {
     console.log('Selected stop:', stop);
@@ -36,10 +52,15 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <DashboardHeader isAuthenticated={false} onLogout={() => {}} />
+      <DashboardHeader isAuthenticated={!!user} onLogout={handleLogout} />
       <main className="flex flex-1 flex-col items-center justify-center gap-6 p-8">
         <h1 className="text-2xl font-bold">Campus Cruiser 🚌</h1>
-
+        {user && (
+          <div className="text-center">
+            <p className="text-lg">Welcome, {user.fullName}!</p>
+            <p className="text-md text-muted-foreground">You are logged in as a {user.role}.</p>
+          </div>
+        )}
         <div className="flex gap-4">
           {DUMMY_ROUTES.map((route) => (
             <button

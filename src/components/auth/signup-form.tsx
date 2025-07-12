@@ -17,12 +17,14 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 
 export function SignupForm() {
   const [fullName, setFullName] = useState('');
   const [rollNumber, setRollNumber] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('student');
   const { toast } = useToast();
   const router = useRouter();
 
@@ -42,6 +44,7 @@ export function SignupForm() {
         rollNumber: rollNumber.toUpperCase(),
         email,
         password, // In a real app, you should hash passwords
+        role,
       });
       toast({
         title: 'Signup Successful',
@@ -71,6 +74,19 @@ export function SignupForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="grid gap-4">
+          <div className="grid gap-2">
+            <Label>Register as</Label>
+            <RadioGroup defaultValue="student" onValueChange={setRole} value={role} className="flex gap-4">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="student" id="student" />
+                <Label htmlFor="student">Student</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="admin" id="admin" />
+                <Label htmlFor="admin">Admin</Label>
+              </div>
+            </RadioGroup>
+          </div>
           <div className="grid gap-2">
             <Label htmlFor="full-name">Full Name</Label>
             <Input 
@@ -115,9 +131,6 @@ export function SignupForm() {
           </div>
           <Button type="submit" className="w-full">
             Create an account
-          </Button>
-          <Button variant="outline" className="w-full" type="button">
-            Sign up with Google
           </Button>
         </form>
         <div className="mt-4 text-center text-sm">
