@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -11,22 +10,23 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Bus } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 
-export function SignupForm() {
+interface SignupFormProps {
+  onUserCreated?: () => void;
+}
+
+export function SignupForm({ onUserCreated }: SignupFormProps) {
   const [fullName, setFullName] = useState('');
   const [identifier, setIdentifier] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('student');
   const { toast } = useToast();
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,6 +64,8 @@ export function SignupForm() {
       setPassword('');
       setRole('student');
 
+      onUserCreated?.();
+
     } catch (error) {
       console.error('Error adding document: ', error);
       toast({
@@ -76,13 +78,7 @@ export function SignupForm() {
 
   return (
     <Card className="mx-auto max-w-sm w-full border-0 shadow-none">
-      <CardHeader className="text-center px-0">
-        <CardTitle className="text-2xl font-headline">Create a New User</CardTitle>
-        <CardDescription>
-          Enter user information to create a new account.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="px-0">
+      <CardContent className="px-0 pt-6">
         <form onSubmit={handleSubmit} className="grid gap-4">
           <div className="grid gap-2">
             <Label>Register as</Label>

@@ -5,10 +5,21 @@ import MapPlaceholder from '@/components/map-placeholder';
 import DashboardHeader from '@/components/dashboard-header';
 import type { Bus, Route, Stop } from '@/types';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { SignupForm } from '@/components/auth/signup-form';
+import { PlusCircle } from 'lucide-react';
 
 // Dummy stops and routes
 const DUMMY_ROUTES: Route[] = [
- {
+  {
     id: 'route-2',
     name: 'College Express',
     stops: [
@@ -30,6 +41,7 @@ const DUMMY_BUSES: Bus[] = [
 export default function HomePage() {
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(DUMMY_ROUTES[0]);
   const [user, setUser] = useState<{ fullName: string; role: string } | null>(null);
+  const [isAddStudentDialogOpen, setAddStudentDialogOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -49,6 +61,10 @@ export default function HomePage() {
     console.log('Selected stop:', stop);
     alert(`Selected stop: ${stop.name}`);
   };
+  
+  const onUserCreated = () => {
+    setAddStudentDialogOpen(false);
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -60,6 +76,25 @@ export default function HomePage() {
             <p className="text-lg">Welcome, {user.fullName}!</p>
             <p className="text-md text-muted-foreground">You are logged in as a {user.role}.</p>
           </div>
+        )}
+        {user?.role === 'admin' && (
+           <Dialog open={isAddStudentDialogOpen} onOpenChange={setAddStudentDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Student
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Add a New User</DialogTitle>
+                <DialogDescription>
+                  Create a new student or admin account.
+                </DialogDescription>
+              </DialogHeader>
+              <SignupForm onUserCreated={onUserCreated} />
+            </DialogContent>
+          </Dialog>
         )}
         <div className="flex gap-4">
           {DUMMY_ROUTES.map((route) => (
