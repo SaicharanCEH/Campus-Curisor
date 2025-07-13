@@ -27,5 +27,10 @@ export interface Bus {
   routeId: string;
   position: { lat: number; lng: number };
   capacity?: BusCapacity;
-  currentStopIndex: number;
+}
+
+export interface Notification {
+    id: string;
+    message: string;
+    timestamp: string; // Stored as ISO string for client compatibility
 }

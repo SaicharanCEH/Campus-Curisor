@@ -16,7 +16,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { SignupForm } from '@/components/auth/signup-form';
-import { Bus as BusIcon, PlusCircle, View, MapPin } from 'lucide-react';
+import { Bus as BusIcon, PlusCircle, View, MapPin, Send } from 'lucide-react';
 import { UserTable } from '@/components/user-table';
 import { AddRouteForm } from '@/components/add-route-form';
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
@@ -28,6 +28,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { deleteRoute } from '@/ai/flows/delete-route';
 import { deleteStop } from '@/ai/flows/delete-stop';
 import { useToast } from '@/hooks/use-toast';
+import { SendNotificationForm } from '@/components/send-notification-form';
+
 
 const libraries: ('places' | 'drawing' | 'geometry' | 'localContext' | 'visualization')[] = ['places'];
 
@@ -47,6 +49,7 @@ export default function HomePage() {
   const [isAddStudentDialogOpen, setAddStudentDialogOpen] = useState(false);
   const [isAddRouteDialogOpen, setAddRouteDialogOpen] = useState(false);
   const [isAddStopDialogOpen, setAddStopDialogOpen] = useState(false);
+  const [isBroadcastDialogOpen, setBroadcastDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const { toast } = useToast();
@@ -151,6 +154,10 @@ export default function HomePage() {
     setRoutes(allRoutes);
   };
 
+  const onNotificationSent = () => {
+    setBroadcastDialogOpen(false);
+  };
+
   const handleDeleteRoute = async (routeId: string) => {
     const result = await deleteRoute(routeId);
     if (result.success) {
@@ -188,11 +195,6 @@ export default function HomePage() {
     }
   };
   
-  const activeBuses = buses
-    .filter(bus => bus.routeId === selectedRoute?.id)
-    .map(bus => ({ ...bus, capacity: selectedRoute?.capacity }));
-
-
   if (isLoading) {
     return (
       <div className="flex h-screen w-full flex-col">
@@ -289,6 +291,24 @@ export default function HomePage() {
                             />
                         </DialogContent>
                         </Dialog>
+                        
+                        <Dialog open={isBroadcastDialogOpen} onOpenChange={setBroadcastDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button>
+                                    <Send className="mr-2 h-4 w-4" />
+                                    Broadcast
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-md">
+                                <DialogHeader>
+                                    <DialogTitle>Send a Broadcast Notification</DialogTitle>
+                                    <DialogDescription>
+                                        The message will be sent to all users.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <SendNotificationForm onNotificationSent={onNotificationSent} />
+                            </DialogContent>
+                        </Dialog>
 
                         <Dialog>
                         <DialogTrigger asChild>
@@ -311,7 +331,7 @@ export default function HomePage() {
                 )}
                 <div className="w-full h-full">
                     <MapPlaceholder
-                        buses={activeBuses}
+                        buses={[]}
                         selectedRoute={selectedRoute}
                         onSelectStop={handleStopSelect}
                         isLoaded={isLoaded}

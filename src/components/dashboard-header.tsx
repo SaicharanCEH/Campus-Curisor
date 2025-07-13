@@ -1,9 +1,9 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Bus, Search, User, LogOut, ChevronDown, Bell } from 'lucide-react';
+import { Bus, Search, User, LogOut, Bell, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -25,6 +25,9 @@ import {
   CardTitle,
 } from './ui/card';
 import { Skeleton } from './ui/skeleton';
+import { getNotifications } from '@/ai/flows/get-notifications';
+import type { Notification } from '@/types';
+import { formatDistanceToNow } from 'date-fns';
 
 interface DashboardHeaderProps {
   isAuthenticated: boolean;
@@ -34,7 +37,7 @@ interface DashboardHeaderProps {
 interface SearchResult {
   busRoute: string;
   estimatedArrivalTime: string;
-  stops?: { name: string; eta: string }[]; // Added stops to SearchResult
+  stops?: { name: string; eta: string }[];
   confidenceScore: number;
 }
 
@@ -45,18 +48,32 @@ export default function DashboardHeader({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [hasUnread, setHasUnread] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      const fetchNotifications = async () => {
+        const fetchedNotifications = await getNotifications();
+        setNotifications(fetchedNotifications);
+        const lastViewed = localStorage.getItem('lastNotificationView');
+        if (fetchedNotifications.length > 0 && (!lastViewed || new Date(lastViewed) < new Date(fetchedNotifications[0].timestamp))) {
+            setHasUnread(true);
+        }
+      };
+      fetchNotifications();
+    }
+  }, [isAuthenticated]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Assuming any numeric input is a bus number search
     if (!searchQuery.trim()) return;
 
     setIsLoading(true);
     setSearchResult(null);
 
     try {
-      // Assuming any numeric input is a bus number search
       const result = await naturalLanguageBusSearch({
         query: searchQuery.trim(),
       });
@@ -70,6 +87,13 @@ export default function DashboardHeader({
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+  
+  const handleBellClick = () => {
+    if (hasUnread) {
+        setHasUnread(false);
+        localStorage.setItem('lastNotificationView', new Date().toISOString());
     }
   };
 
@@ -116,11 +140,37 @@ export default function DashboardHeader({
             </CardFooter>
           </Card>
         )}
-
-        <Button variant="ghost" size="icon" className="rounded-full">
-            <Bell className="h-5 w-5" />
-            <span className="sr-only">Toggle notifications</span>
-        </Button>
+        
+        {isAuthenticated && (
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full relative" onClick={handleBellClick}>
+                        <Bell className="h-5 w-5" />
+                        {hasUnread && <span className="absolute top-1.5 right-1.5 flex h-2 w-2 rounded-full bg-destructive" />}
+                        <span className="sr-only">Toggle notifications</span>
+                    </Button>
+                </DropdownMenuTrigger>
+                 <DropdownMenuContent align="end" className="w-80">
+                    <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {notifications.length > 0 ? (
+                        notifications.map(notif => (
+                            <DropdownMenuItem key={notif.id} className="flex flex-col items-start gap-1 whitespace-normal">
+                                <p className="font-medium text-sm">{notif.message}</p>
+                                <p className="text-xs text-muted-foreground">
+                                    {formatDistanceToNow(new Date(notif.timestamp), { addSuffix: true })}
+                                </p>
+                            </DropdownMenuItem>
+                        ))
+                    ) : (
+                         <div className="flex flex-col items-center justify-center p-4 text-center">
+                            <MessageSquare className="h-8 w-8 text-muted-foreground mb-2" />
+                            <p className="text-sm text-muted-foreground">No notifications yet.</p>
+                        </div>
+                    )}
+                 </DropdownMenuContent>
+            </DropdownMenu>
+        )}
 
         {isAuthenticated ? (
           <DropdownMenu>

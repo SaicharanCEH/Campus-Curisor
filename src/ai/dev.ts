@@ -11,3 +11,5 @@ import '@/ai/flows/delete-student.ts';
 import '@/ai/flows/delete-route.ts';
 import '@/ai/flows/delete-stop.ts';
 import '@/ai/flows/update-user-profile.ts';
+import '@/ai/flows/send-notification.ts';
+import '@/ai/flows/get-notifications.ts';
