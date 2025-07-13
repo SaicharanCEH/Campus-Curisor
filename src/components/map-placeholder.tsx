@@ -40,16 +40,12 @@ const polylineOptions = {
 const getBusIconUrl = (capacity?: BusCapacity) => {
     switch (capacity) {
         case 'Low':
-            // Green Bus Icon
             return 'https://raw.githubusercontent.com/Concept211/Google-Maps-Markers/master/images/marker_green.png';
         case 'Medium':
-            // Orange Bus Icon
             return 'https://raw.githubusercontent.com/Concept211/Google-Maps-Markers/master/images/marker_orange.png';
         case 'Full':
-            // Red Bus Icon
             return 'https://raw.githubusercontent.com/Concept211/Google-Maps-Markers/master/images/marker_red.png';
         default:
-            // Default Black Bus Icon
             return 'https://raw.githubusercontent.com/Concept211/Google-Maps-Markers/master/images/marker_black.png';
     }
 }

@@ -29,7 +29,9 @@ import { deleteRoute } from '@/ai/flows/delete-route';
 import { deleteStop } from '@/ai/flows/delete-stop';
 import { useToast } from '@/hooks/use-toast';
 
-const DUMMY_BUSES: Bus[] = [
+const DUMMY_BUS_DATA: Bus[] = [
+  { id: 'bus-1', routeId: 'route-1', position: { lat: 17.395, lng: 78.495 } },
+  { id: 'bus-2', routeId: 'route-1', position: { lat: 17.415, lng: 78.515 } },
   { id: 'bus-3', routeId: 'route-2', position: { lat: 17.4025, lng: 78.5025 } },
   { id: 'bus-4', routeId: 'route-2', position: { lat: 17.4125, lng: 78.5125 } },
 ];
@@ -38,6 +40,7 @@ const libraries: ('places' | 'drawing' | 'geometry' | 'localContext' | 'visualiz
 
 export default function HomePage() {
   const [routes, setRoutes] = useState<Route[]>([]);
+  const [buses, setBuses] = useState<Bus[]>(DUMMY_BUS_DATA);
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
   const [selectedStop, setSelectedStop] = useState<Stop | null>(null);
   const [favoriteStops, setFavoriteStops] = useState<string[]>([]);
@@ -84,6 +87,22 @@ export default function HomePage() {
     }
   }, [router]);
   
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setBuses(currentBuses => 
+        currentBuses.map(bus => ({
+          ...bus,
+          position: {
+            lat: bus.position.lat + (Math.random() - 0.5) * 0.001,
+            lng: bus.position.lng + (Math.random() - 0.5) * 0.001,
+          }
+        }))
+      );
+    }, 3000); // Update every 3 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
   const handleLogout = () => {
     localStorage.removeItem('user');
     setUser(null);
@@ -154,7 +173,7 @@ export default function HomePage() {
     }
   };
   
-  const activeBuses = DUMMY_BUSES
+  const activeBuses = buses
     .filter(bus => bus.routeId === selectedRoute?.id)
     .map(bus => ({ ...bus, capacity: selectedRoute?.capacity }));
 
