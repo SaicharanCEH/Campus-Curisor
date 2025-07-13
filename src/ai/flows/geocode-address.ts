@@ -30,13 +30,10 @@ export type GeocodeAddressOutput = z.infer<typeof GeocodeAddressOutputSchema>;
 // Configure the geocoder. Using a provider like OpenStreetMap doesn't require an API key.
 // In a production app, you might want to use Google Maps Platform or another provider with an API key.
 const geocoder = NodeGeocoder({
-  provider: 'openstreetmap',fetch,
+  provider: 'openstreetmap',
   fetch,
   // Adding referrer for Nominatim usage policy compliance.
-  // Replace "YOUR_APP_URL" with the actual URL of your application.
-  providerFor: {
-    openstreetmap: { referrer: 'YOUR_APP_URL' }
-  }
+  referrer: 'https://campus-cruiser-app.com' // Identifies the application.
  });
 
 const geocodeTool = ai.defineTool(
