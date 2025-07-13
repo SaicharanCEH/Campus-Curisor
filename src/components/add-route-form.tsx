@@ -11,7 +11,7 @@ import { collection, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { ScrollArea } from './ui/scroll-area';
 import { geocodeAddress } from '@/ai/flows/geocode-address';
-import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
+import { Autocomplete } from '@react-google-maps/api';
 
 interface Stop {
   rollNumber: string;
