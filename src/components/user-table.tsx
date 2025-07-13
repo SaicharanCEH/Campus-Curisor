@@ -29,48 +29,61 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Trash2 } from 'lucide-react';
-import type { Route } from '@/types';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Trash2, Pencil } from 'lucide-react';
+import type { Route, Stop } from '@/types';
+import { EditStopForm } from './edit-stop-form';
+import { useJsApiLoader } from '@react-google-maps/api';
 
-interface StudentWithLocation extends DocumentData {
-    location?: string;
+interface StudentWithStopInfo extends DocumentData {
+    stopInfo?: Stop;
+    routeId?: string;
 }
 
+const libraries: ('places' | 'drawing' | 'geometry' | 'localContext' | 'visualization')[] = ['places'];
+
+
 export function UserTable() {
-  const [students, setStudents] = useState<StudentWithLocation[]>([]);
+  const [students, setStudents] = useState<StudentWithStopInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
+  const [isEditDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<StudentWithStopInfo | null>(null);
+
+  const { isLoaded: isGoogleMapsLoaded } = useJsApiLoader({
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
+    libraries,
+  });
 
   const fetchStudentsAndLocations = async () => {
     setLoading(true);
     try {
-      // Fetch all routes to get stop information
       const routesCollection = collection(db, 'routes');
       const routeSnapshot = await getDocs(routesCollection);
       const routesList = routeSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Route));
       
-      const stopLocationMap = new Map<string, string>();
+      const stopInfoMap = new Map<string, { stop: Stop; routeId: string }>();
       routesList.forEach(route => {
         route.stops.forEach(stop => {
-          // Store the latest location for each roll number
-          stopLocationMap.set(stop.rollNumber.toUpperCase(), stop.location);
+          stopInfoMap.set(stop.rollNumber.toUpperCase(), { stop, routeId: route.id });
         });
       });
 
-      // Fetch all students
       const usersRef = collection(db, 'users');
       const q = query(usersRef, where('role', '==', 'student'));
       const querySnapshot = await getDocs(q);
       const studentsData = querySnapshot.docs.map(doc => {
         const data = doc.data();
         const studentRollNumber = data.rollNumber?.toUpperCase();
+        const stopData = stopInfoMap.get(studentRollNumber);
         return {
           id: doc.id,
           ...data,
-          location: stopLocationMap.get(studentRollNumber) || 'Not Assigned',
+          stopInfo: stopData?.stop,
+          routeId: stopData?.routeId,
         };
       });
 
@@ -87,6 +100,16 @@ export function UserTable() {
   useEffect(() => {
     fetchStudentsAndLocations();
   }, []);
+  
+  const onStopUpdated = () => {
+    setEditDialogOpen(false);
+    fetchStudentsAndLocations(); // Re-fetch all data to ensure consistency
+  }
+
+  const handleEditClick = (student: StudentWithStopInfo) => {
+    setSelectedStudent(student);
+    setEditDialogOpen(true);
+  };
 
   const handleClearStudents = async () => {
     setIsDeletingAll(true);
@@ -121,7 +144,6 @@ export function UserTable() {
           title: 'Student Deleted',
           description: 'The student account has been successfully removed.',
         });
-        // Remove student from local state to update UI
         setStudents(prevStudents => prevStudents.filter(student => student.id !== studentId));
       } else {
         throw new Error(result.message || 'An unknown error occurred while deleting the student.');
@@ -184,9 +206,9 @@ export function UserTable() {
             <TableHeader>
             <TableRow>
                 <TableHead>Full Name</TableHead>
-                <TableHead>Email</TableHead>
                 <TableHead>Roll Number</TableHead>
                 <TableHead>Location</TableHead>
+                <TableHead>Email</TableHead>
                 <TableHead>Phone</TableHead>
                 <TableHead>Password</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -197,12 +219,21 @@ export function UserTable() {
                 students.map(user => (
                 <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.fullName}</TableCell>
-                    <TableCell>{user.email}</TableCell>
                     <TableCell>{user.rollNumber}</TableCell>
-                    <TableCell>{user.location}</TableCell>
+                    <TableCell>{user.stopInfo?.location || 'Not Assigned'}</TableCell>
+                    <TableCell>{user.email}</TableCell>
                     <TableCell>{user.phoneNumber || 'N/A'}</TableCell>
                     <TableCell>{user.password}</TableCell>
                     <TableCell className="text-right">
+                       <Button 
+                         variant="ghost" 
+                         size="icon" 
+                         onClick={() => handleEditClick(user)} 
+                         disabled={!user.stopInfo}
+                         title={user.stopInfo ? "Edit stop" : "No stop assigned to edit"}
+                        >
+                          <Pencil className="h-4 w-4" />
+                       </Button>
                        <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="ghost" size="icon" disabled={isDeleting}>
@@ -239,6 +270,20 @@ export function UserTable() {
             </TableBody>
         </Table>
         </ScrollArea>
+        {selectedStudent && (
+          <Dialog open={isEditDialogOpen} onOpenChange={setEditDialogOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Edit Stop for {selectedStudent.fullName}</DialogTitle>
+              </DialogHeader>
+              <EditStopForm 
+                student={selectedStudent} 
+                onStopUpdated={onStopUpdated}
+                isGoogleMapsLoaded={isGoogleMapsLoaded}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
     </div>
   );
 }
