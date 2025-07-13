@@ -22,14 +22,11 @@ import { AddRouteForm } from '@/components/add-route-form';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import CruiserSidebar from '@/components/cruiser-sidebar';
-import { useJsApiLoader } from '@react-google-maps/api';
 
 const DUMMY_BUSES: Bus[] = [
   { id: 'bus-3', routeId: 'route-2', position: { lat: 17.4025, lng: 78.5025 } },
   { id: 'bus-4', routeId: 'route-2', position: { lat: 17.4125, lng: 78.5125 } },
 ];
-
-const libraries: ('places' | 'drawing' | 'geometry' | 'localContext' | 'visualization')[] = ['places'];
 
 export default function HomePage() {
   const [routes, setRoutes] = useState<Route[]>([]);
@@ -40,11 +37,6 @@ export default function HomePage() {
   const [isAddStudentDialogOpen, setAddStudentDialogOpen] = useState(false);
   const [isAddRouteDialogOpen, setAddRouteDialogOpen] = useState(false);
   const router = useRouter();
-
-  const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
-    libraries,
-  });
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -147,7 +139,7 @@ export default function HomePage() {
                                 Define a new route with its name and stops.
                             </DialogDescription>
                             </DialogHeader>
-                            <AddRouteForm onRouteCreated={onRouteCreated} isLoaded={isLoaded} loadError={loadError}/>
+                            <AddRouteForm onRouteCreated={onRouteCreated} />
                         </DialogContent>
                         </Dialog>
                         <Dialog>
@@ -171,8 +163,6 @@ export default function HomePage() {
                 )}
                 <div className="w-full h-full">
                     <MapPlaceholder
-                        isLoaded={isLoaded}
-                        loadError={loadError}
                         buses={DUMMY_BUSES.filter(bus => bus.routeId === selectedRoute?.id)}
                         selectedRoute={selectedRoute}
                         onSelectStop={handleStopSelect}
