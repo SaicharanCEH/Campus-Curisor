@@ -10,6 +10,9 @@ export interface Stop {
 export interface Route {
   id: string;
   name: string;
+  busNumber: string;
+  driverName: string;
+  driverMobile: string;
   stops: Stop[];
 }
 
