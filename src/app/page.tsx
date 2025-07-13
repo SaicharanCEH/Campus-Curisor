@@ -255,7 +255,7 @@ export default function HomePage() {
                     selectedStop={selectedStop}
                     onSelectStop={handleStopSelect}
                     favoriteStops={favoriteStops}
-                    onToggleFavorite={onToggleFavorite}
+                    onToggleFavorite={handleToggleFavorite}
                     onDeleteRoute={handleDeleteRoute}
                     onDeleteStop={handleDeleteStop}
                     onCapacityChange={handleCapacityChange}
