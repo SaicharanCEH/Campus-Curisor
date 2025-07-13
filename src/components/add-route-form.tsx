@@ -11,9 +11,7 @@ import { X, PlusCircle } from 'lucide-react';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { ScrollArea } from './ui/scroll-area';
-import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
-
-const libraries: ('places' | 'drawing' | 'geometry' | 'localContext' | 'visualization')[] = ['places'];
+import { Autocomplete } from '@react-google-maps/api';
 
 interface StopFormValues {
   rollNumber: string;
@@ -33,17 +31,14 @@ interface AddRouteFormValues {
 
 interface AddRouteFormProps {
   onRouteCreated?: () => void;
+  isLoaded: boolean;
+  loadError?: Error;
 }
 
-export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
+export function AddRouteForm({ onRouteCreated, isLoaded, loadError }: AddRouteFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const autocompleteRefs = useRef<google.maps.places.Autocomplete[]>([]);
-
-  const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
-    libraries,
-  });
 
   const { register, control, handleSubmit, reset, setValue, formState: { errors } } = useForm<AddRouteFormValues>({
     defaultValues: {
@@ -123,7 +118,7 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
     }
   };
   
-  if (loadError) return <div>Error loading maps. Please try again.</div>;
+  if (loadError) return <div>Error loading maps. Please enable the required APIs in your Google Cloud project.</div>;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="grid gap-6">
