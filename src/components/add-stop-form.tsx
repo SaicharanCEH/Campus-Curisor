@@ -44,7 +44,7 @@ export function AddStopForm({ onStopAdded, isGoogleMapsLoaded, routes }: AddStop
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
   const routeOptions = useMemo(() => {
-    return routes.map(route => ({ value: route.id, label: route.name }))
+    return routes.map(route => ({ value: route.id, label: `${route.busNumber} (${route.name})` }))
   }, [routes]);
 
   const { register, control, handleSubmit, reset, formState: { errors }, setValue, watch } = useForm<AddStopFormValues>({
@@ -102,7 +102,7 @@ export function AddStopForm({ onStopAdded, isGoogleMapsLoaded, routes }: AddStop
     setIsSubmitting(true);
     try {
         if (!data.routeId) {
-            throw new Error("Please select a route.");
+            throw new Error("Please select a route by its bus number.");
         }
         if (!data.rollNumber) {
             throw new Error("Please select a student.");
@@ -152,15 +152,15 @@ export function AddStopForm({ onStopAdded, isGoogleMapsLoaded, routes }: AddStop
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="grid gap-6 pt-4">
         <div className="grid gap-2">
-            <Label htmlFor="routeId">Route</Label>
+            <Label htmlFor="routeId">Bus Number</Label>
             <Controller
                 name="routeId"
                 control={control}
-                rules={{ required: 'Please select a route' }}
+                rules={{ required: 'Please select a bus number' }}
                 render={({ field }) => (
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <SelectTrigger>
-                            <SelectValue placeholder="Select a route" />
+                            <SelectValue placeholder="Select a bus number" />
                         </SelectTrigger>
                         <SelectContent>
                             {routeOptions.map(option => (
@@ -265,5 +265,3 @@ export function AddStopForm({ onStopAdded, isGoogleMapsLoaded, routes }: AddStop
     </form>
   );
 }
-
-    
