@@ -85,7 +85,7 @@ export function AddStopForm({ onStopAdded, isGoogleMapsLoaded, routes }: AddStop
     fetchStudents();
   }, [toast]);
 
-  const onAutocompleteLoad = (autocomplete: google.maps.places.Autocomplete | null) => {
+  const onAutocompleteLoad = (autocomplete: google.maps.places.Autocomplete) => {
     autocompleteRef.current = autocomplete;
   };
 
@@ -93,7 +93,7 @@ export function AddStopForm({ onStopAdded, isGoogleMapsLoaded, routes }: AddStop
     if (autocompleteRef.current) {
       const place = autocompleteRef.current.getPlace();
       if (place && place.formatted_address) {
-        setValue(`location`, place.formatted_address);
+        setValue('location', place.formatted_address, { shouldValidate: true });
       }
     }
   };
@@ -212,29 +212,28 @@ export function AddStopForm({ onStopAdded, isGoogleMapsLoaded, routes }: AddStop
             <Label htmlFor="location">Location</Label>
             {isGoogleMapsLoaded ? (
                 <Controller
-                name="location"
-                control={control}
-                rules={{ required: 'Location is required' }}
-                render={({ field: { onChange, value } }) => (
-                    <Autocomplete
-                        onLoad={(autocomplete) => onAutocompleteLoad(autocomplete)}
-                        onPlaceChanged={onPlaceChanged}
-                        fields={['formatted_address', 'geometry']} // Explicitly request fields
-                    >
-                        <Input
-                            id="location"
-                            placeholder="e.g., Main Gate, VNRVJIET"
-                            onChange={onChange}
-                            value={value}
-                        />
-                    </Autocomplete>
-                )}
+                    name="location"
+                    control={control}
+                    rules={{ required: 'Location is required' }}
+                    render={({ field }) => (
+                        <Autocomplete
+                            onLoad={onAutocompleteLoad}
+                            onPlaceChanged={onPlaceChanged}
+                            fields={['formatted_address', 'geometry']}
+                        >
+                            <Input
+                                {...field}
+                                id="location"
+                                placeholder="e.g., Main Gate, VNRVJIET"
+                            />
+                        </Autocomplete>
+                    )}
                 />
             ) : (
                 <Input
-                id="location"
-                placeholder="e.g., Main Gate, VNRVJIET"
-                {...register('location' as const, { required: 'Location is required' })}
+                    id="location"
+                    placeholder="e.g., Main Gate, VNRVJIET"
+                    {...register('location' as const, { required: 'Location is required' })}
                 />
             )}
             {errors.location && <p className="text-destructive text-sm">{errors.location.message}</p>}
