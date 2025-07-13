@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useState, useRef, useEffect } from 'react';
+import { useFieldArray, useForm, Controller } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +12,7 @@ import { collection, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { ScrollArea } from './ui/scroll-area';
 import { geocodeAddress } from '@/ai/flows/geocode-address';
+import { Autocomplete } from '@react-google-maps/api';
 
 interface StopFormValues {
   rollNumber: string;
@@ -30,13 +31,15 @@ interface AddRouteFormValues {
 
 interface AddRouteFormProps {
   onRouteCreated?: () => void;
+  isGoogleMapsLoaded: boolean;
 }
 
-export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
+export function AddRouteForm({ onRouteCreated, isGoogleMapsLoaded }: AddRouteFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const autocompleteRefs = useRef<google.maps.places.Autocomplete[]>([]);
 
-  const { register, control, handleSubmit, reset, formState: { errors } } = useForm<AddRouteFormValues>({
+  const { register, control, handleSubmit, reset, formState: { errors }, setValue } = useForm<AddRouteFormValues>({
     defaultValues: {
       name: '',
       busNumber: '',
@@ -51,6 +54,20 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
     name: 'stops',
   });
 
+  const onAutocompleteLoad = (autocomplete: google.maps.places.Autocomplete, index: number) => {
+    autocompleteRefs.current[index] = autocomplete;
+  };
+
+  const onPlaceChanged = (index: number) => {
+    const autocomplete = autocompleteRefs.current[index];
+    if (autocomplete) {
+      const place = autocomplete.getPlace();
+      if (place && place.formatted_address) {
+        setValue(`stops.${index}.location`, place.formatted_address);
+      }
+    }
+  };
+
   const onSubmit = async (data: AddRouteFormValues) => {
     setIsSubmitting(true);
     try {
@@ -60,13 +77,16 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
             throw new Error(`Location for student "${stop.studentName}" is missing.`);
           }
           const coordinates = await geocodeAddress({ address: stop.location });
+          if (!coordinates || coordinates.lat === undefined || coordinates.lng === undefined) {
+             throw new Error(`Could not find coordinates for location: "${stop.location}". Please enter a valid address.`);
+          }
           return {
             id: `${data.name.replace(/\s+/g, '-').toLowerCase()}-${stop.studentName.replace(/\s+/g, '-').toLowerCase()}-${Math.random().toString(36).substr(2, 5)}`,
             studentName: stop.studentName,
             rollNumber: stop.rollNumber,
             location: stop.location,
             time: stop.time,
-            position: coordinates, // Add the geocoded position
+            position: coordinates,
           };
         })
       );
@@ -166,11 +186,31 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
                 </div>
                 <div className="col-span-12 sm:col-span-6">
                   <Label htmlFor={`stops.${index}.location`} className="text-xs">Location</Label>
-                  <Input
+                  {isGoogleMapsLoaded ? (
+                     <Controller
+                        name={`stops.${index}.location`}
+                        control={control}
+                        rules={{ required: true }}
+                        render={({ field }) => (
+                           <Autocomplete
+                            onLoad={(autocomplete) => onAutocompleteLoad(autocomplete, index)}
+                            onPlaceChanged={() => onPlaceChanged(index)}
+                          >
+                            <Input
+                              {...field}
+                              id={`stops.${index}.location`}
+                              placeholder="e.g., Main Gate, VNRVJIET"
+                            />
+                           </Autocomplete>
+                        )}
+                      />
+                  ) : (
+                     <Input
                       id={`stops.${index}.location`}
                       placeholder="e.g., Main Gate, VNRVJIET"
                       {...register(`stops.${index}.location` as const, { required: true })}
                     />
+                  )}
                 </div>
                 <div className="col-span-9 sm:col-span-4">
                   <Label htmlFor={`stops.${index}.time`} className="text-xs">Time</Label>
