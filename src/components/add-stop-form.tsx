@@ -217,15 +217,16 @@ export function AddStopForm({ onStopAdded, isGoogleMapsLoaded, routes }: AddStop
                 rules={{ required: 'Location is required' }}
                 render={({ field: { onChange, value } }) => (
                     <Autocomplete
-                    onLoad={(autocomplete) => onAutocompleteLoad(autocomplete)}
-                    onPlaceChanged={onPlaceChanged}
+                        onLoad={(autocomplete) => onAutocompleteLoad(autocomplete)}
+                        onPlaceChanged={onPlaceChanged}
+                        fields={['formatted_address', 'geometry']} // Explicitly request fields
                     >
-                    <Input
-                        id="location"
-                        placeholder="e.g., Main Gate, VNRVJIET"
-                        onChange={onChange}
-                        value={value}
-                    />
+                        <Input
+                            id="location"
+                            placeholder="e.g., Main Gate, VNRVJIET"
+                            onChange={onChange}
+                            value={value}
+                        />
                     </Autocomplete>
                 )}
                 />
