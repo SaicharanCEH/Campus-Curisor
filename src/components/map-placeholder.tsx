@@ -23,20 +23,6 @@ const defaultCenter = {
   lng: 78.5961,
 };
 
-const polylineOptions = {
-    strokeColor: '#3F51B5',
-    strokeOpacity: 0.8,
-    strokeWeight: 4,
-    fillColor: '#3F51B5',
-    fillOpacity: 0.35,
-    clickable: false,
-    draggable: false,
-    editable: false,
-    visible: true,
-    radius: 30000,
-    zIndex: 1,
-};
-
 const getBusIconUrl = (capacity?: BusCapacity) => {
     switch (capacity) {
         case 'Low':
@@ -80,10 +66,6 @@ export default function MapPlaceholder({
         mapRef.current.setZoom(15);
     }
   }, [selectedRoute]);
-
-  const routePath = selectedRoute?.stops
-    .filter(stop => stop.position)
-    .map(stop => stop.position);
 
   if (loadError) {
     return <p>Error loading map. Please check your API key and ensure it is configured correctly.</p>
@@ -144,12 +126,6 @@ export default function MapPlaceholder({
         />
       ))}
       
-      {routePath && routePath.length > 1 && (
-        <Polyline
-          path={routePath}
-          options={polylineOptions}
-        />
-      )}
     </GoogleMap>
   );
 }
