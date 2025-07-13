@@ -60,6 +60,12 @@ export function Combobox({ options, value, onChange, placeholder, notFoundText }
                     onChange(currentValue === value ? "" : currentValue)
                     setOpen(false)
                   }}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onChange(option.value === value ? "" : option.value);
+                    setOpen(false);
+                  }}
                 >
                   <Check
                     className={cn(
