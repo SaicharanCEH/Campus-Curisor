@@ -17,6 +17,7 @@ import { Skeleton } from './ui/skeleton';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { deleteAllStudents } from '@/ai/flows/delete-all-students';
+import { deleteStudent } from '@/ai/flows/delete-student';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +37,7 @@ export function UserTable() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
 
   const fetchStudents = async () => {
     setLoading(true);
@@ -61,7 +63,7 @@ export function UserTable() {
   }, []);
 
   const handleClearStudents = async () => {
-    setIsDeleting(true);
+    setIsDeletingAll(true);
     try {
       const result = await deleteAllStudents();
       if (result.success) {
@@ -72,6 +74,31 @@ export function UserTable() {
         setStudents([]); // Clear students from state
       } else {
         throw new Error(result.message || 'An unknown error occurred');
+      }
+    } catch (err) {
+      toast({
+        variant: 'destructive',
+        title: 'Deletion Failed',
+        description: err instanceof Error ? err.message : String(err),
+      });
+    } finally {
+      setIsDeletingAll(false);
+    }
+  };
+
+  const handleDeleteStudent = async (studentId: string) => {
+    setIsDeleting(true);
+    try {
+      const result = await deleteStudent(studentId);
+      if (result.success) {
+        toast({
+          title: 'Student Deleted',
+          description: 'The student account has been successfully removed.',
+        });
+        // Remove student from local state to update UI
+        setStudents(prevStudents => prevStudents.filter(student => student.id !== studentId));
+      } else {
+        throw new Error(result.message || 'An unknown error occurred while deleting the student.');
       }
     } catch (err) {
       toast({
@@ -104,9 +131,9 @@ export function UserTable() {
         <div className="flex justify-end mb-4">
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" disabled={students.length === 0}>
+                <Button variant="destructive" disabled={students.length === 0 || isDeletingAll}>
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Clear All Students
+                  {isDeletingAll ? 'Clearing...' : 'Clear All Students'}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -119,8 +146,8 @@ export function UserTable() {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleClearStudents} disabled={isDeleting}>
-                    {isDeleting ? 'Deleting...' : 'Continue'}
+                  <AlertDialogAction onClick={handleClearStudents} disabled={isDeletingAll}>
+                    {isDeletingAll ? 'Deleting...' : 'Continue'}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -135,6 +162,7 @@ export function UserTable() {
                 <TableHead>Phone</TableHead>
                 <TableHead>Roll Number</TableHead>
                 <TableHead>Password</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
             </TableRow>
             </TableHeader>
             <TableBody>
@@ -146,11 +174,38 @@ export function UserTable() {
                     <TableCell>{user.phoneNumber || 'N/A'}</TableCell>
                     <TableCell>{user.rollNumber}</TableCell>
                     <TableCell>{user.password}</TableCell>
+                    <TableCell className="text-right">
+                       <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" disabled={isDeleting}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete {user.fullName}?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently delete the student account for {user.fullName} ({user.rollNumber}). This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => handleDeleteStudent(user.id)} 
+                                disabled={isDeleting}
+                                className="bg-destructive hover:bg-destructive/90"
+                              >
+                                {isDeleting ? 'Deleting...' : 'Delete'}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                    </TableCell>
                 </TableRow>
                 ))
             ) : (
                 <TableRow>
-                    <TableCell colSpan={5} className="text-center">No students found.</TableCell>
+                    <TableCell colSpan={6} className="text-center">No students found.</TableCell>
                 </TableRow>
             )}
             </TableBody>
