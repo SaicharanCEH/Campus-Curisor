@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -129,6 +130,7 @@ export function UserTable() {
             <TableRow>
                 <TableHead>Full Name</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Phone</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Identifier</TableHead>
                 <TableHead>Password</TableHead>
@@ -142,6 +144,7 @@ export function UserTable() {
                 <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.fullName}</TableCell>
                     <TableCell>{user.email}</TableCell>
+                    <TableCell>{user.phoneNumber || 'N/A'}</TableCell>
                     <TableCell>{user.role}</TableCell>
                     <TableCell>{user.role === 'student' ? user.rollNumber : user.username}</TableCell>
                     <TableCell>{user.password}</TableCell>
@@ -151,7 +154,7 @@ export function UserTable() {
                 ))
             ) : (
                 <TableRow>
-                    <TableCell colSpan={7} className="text-center">No users found.</TableCell>
+                    <TableCell colSpan={8} className="text-center">No users found.</TableCell>
                 </TableRow>
             )}
             </TableBody>

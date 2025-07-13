@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A flow to send a welcome email to new users.
@@ -13,6 +14,7 @@ import { sendMail } from '@/lib/mail';
 const WelcomeEmailInputSchema = z.object({
   fullName: z.string().describe('The full name of the new user.'),
   email: z.string().email().describe('The email address of the new user.'),
+  phoneNumber: z.string().optional().describe('The phone number of the new user.'),
   identifier: z.string().describe('The roll number or username for the new user.'),
   password: z.string().describe('The auto-generated password for the new user.'),
   role: z.string().describe('The role assigned to the new user (student or admin).'),
@@ -43,6 +45,9 @@ Include the student's bus details in the email body.
 Here is the user's information:
 - Name: {{fullName}}
 - Email: {{email}}
+{{#if phoneNumber}}
+- Phone: {{phoneNumber}}
+{{/if}}
 - Login Identifier ({{#if isStudent}}Roll Number{{else}}Username{{/if}}): {{identifier}}
 - Password: {{password}}
 - Role: {{role}}

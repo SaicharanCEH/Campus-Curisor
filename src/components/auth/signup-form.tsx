@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,7 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
   const [fullName, setFullName] = useState('');
   const [identifier, setIdentifier] = useState('');
   const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [role, setRole] = useState('student');
   const [busNumber, setBusNumber] = useState('');
   const [pickupLocation, setPickupLocation] = useState('');
@@ -52,6 +54,18 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
             return;
         }
     }
+    
+    // Validate phone number format
+    const phoneRegex = /^\d{10}$/;
+    if (phoneNumber && !phoneRegex.test(phoneNumber)) {
+        toast({
+            variant: 'destructive',
+            title: 'Invalid Phone Number',
+            description: 'Phone number must be exactly 10 digits.',
+        });
+        return;
+    }
+
 
     setIsSubmitting(true);
     try {
@@ -60,6 +74,7 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
       const userData: { [key: string]: any } = {
         fullName,
         email,
+        phoneNumber,
         password: generatedPassword, 
         role,
       };
@@ -83,6 +98,7 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
       const emailResult = await sendWelcomeEmail({
         fullName,
         email,
+        phoneNumber,
         identifier: role === 'student' ? identifier.toUpperCase() : identifier,
         password: generatedPassword,
         role,
@@ -109,6 +125,7 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
       setFullName('');
       setIdentifier('');
       setEmail('');
+      setPhoneNumber('');
       setRole('student');
       setBusNumber('');
       setPickupLocation('');
@@ -175,6 +192,16 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="phone-number">Phone Number</Label>
+            <Input
+              id="phone-number"
+              type="tel"
+              placeholder="9876543210"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
             />
           </div>
 
