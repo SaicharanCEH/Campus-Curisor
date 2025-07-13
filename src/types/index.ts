@@ -4,6 +4,7 @@ export interface Stop {
   studentName: string;
   rollNumber: string;
   location: string;
+  landmark?: string;
   time: string;
   eta?: string;
   position: { lat: number; lng: number };

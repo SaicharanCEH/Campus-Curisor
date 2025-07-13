@@ -18,6 +18,7 @@ interface StopFormValues {
   rollNumber: string;
   studentName: string;
   location: string;
+  landmark: string;
   time: string;
 }
 
@@ -45,7 +46,7 @@ export function AddRouteForm({ onRouteCreated, isGoogleMapsLoaded }: AddRouteFor
       busNumber: '',
       driverName: '',
       driverMobile: '',
-      stops: [{ rollNumber: '', studentName: '', location: '', time: '' }],
+      stops: [{ rollNumber: '', studentName: '', location: '', landmark: '', time: '' }],
     },
   });
 
@@ -85,6 +86,7 @@ export function AddRouteForm({ onRouteCreated, isGoogleMapsLoaded }: AddRouteFor
             studentName: stop.studentName,
             rollNumber: stop.rollNumber,
             location: stop.location,
+            landmark: stop.landmark,
             time: stop.time,
             position: coordinates,
           };
@@ -212,6 +214,14 @@ export function AddRouteForm({ onRouteCreated, isGoogleMapsLoaded }: AddRouteFor
                     />
                   )}
                 </div>
+                 <div className="col-span-12 sm:col-span-6">
+                  <Label htmlFor={`stops.${index}.landmark`} className="text-xs">Landmark (Optional)</Label>
+                  <Input
+                    id={`stops.${index}.landmark`}
+                    placeholder="e.g., Near the big tree"
+                    {...register(`stops.${index}.landmark` as const)}
+                  />
+                </div>
                 <div className="col-span-9 sm:col-span-4">
                   <Label htmlFor={`stops.${index}.time`} className="text-xs">Time</Label>
                   <Input
@@ -235,7 +245,7 @@ export function AddRouteForm({ onRouteCreated, isGoogleMapsLoaded }: AddRouteFor
         <Button
           type="button"
           variant="outline"
-          onClick={() => append({ rollNumber: '', studentName: '', location: '', time: '' })}
+          onClick={() => append({ rollNumber: '', studentName: '', location: '', landmark: '', time: '' })}
         >
           <PlusCircle className="mr-2 h-4 w-4" />
           Add Stop

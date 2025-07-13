@@ -8,9 +8,9 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Bus, Clock, Heart, Map, Star } from 'lucide-react';
+import { Bus, Clock, Heart, Map, Star, Pin } from 'lucide-react';
 import type { Route, Stop } from '@/types';
 
 interface CruiserSidebarProps {
@@ -132,12 +132,19 @@ export default function CruiserSidebar({
                   <Star className={`h-5 w-5 ${favoriteStops.includes(selectedStop.id) ? 'fill-accent text-accent' : 'text-muted-foreground'}`} />
                 </div>
               </CardTitle>
+              <CardDescription>{selectedStop.rollNumber}</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center text-lg">
-                <Clock className="h-5 w-5 mr-2 text-primary" />
-                <span>Scheduled Time: <span className="font-bold">{selectedStop.time}</span></span>
+            <CardContent className="space-y-2">
+              <div className="flex items-center text-md">
+                <Clock className="h-4 w-4 mr-2 text-primary" />
+                <span>Scheduled: <span className="font-semibold">{selectedStop.time}</span></span>
               </div>
+              {selectedStop.landmark && (
+                 <div className="flex items-center text-md">
+                    <Pin className="h-4 w-4 mr-2 text-primary" />
+                    <span>Landmark: <span className="font-semibold">{selectedStop.landmark}</span></span>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
