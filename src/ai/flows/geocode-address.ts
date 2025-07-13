@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A flow to convert a string address into geographic coordinates.
@@ -44,10 +45,13 @@ const geocodeTool = ai.defineTool(
           lng: res[0].longitude,
         };
       }
-      throw new Error(`Could not find coordinates for address: ${address}`);
+      // This is a specific error if no results are found.
+      throw new Error(`No coordinates found for address: "${address}". Please try a more specific location.`);
     } catch (error) {
       console.error('Geocoding error:', error);
-      throw new Error(`Geocoding failed for address: ${address}`);
+      // This catches errors from the geocoding service itself (e.g., network issues, timeouts).
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Geocoding service failed for address: "${address}". Reason: ${message}`);
     }
   }
 );
@@ -62,9 +66,10 @@ const geocodeAddressFlow = ai.defineFlow(
     name: 'geocodeAddressFlow',
     inputSchema: GeocodeAddressInputSchema,
     outputSchema: GeocodeAddressOutputSchema,
-    tools: [geocodeTool],
   },
   async (input) => {
+    // This flow directly calls the tool since the task is pure geocoding.
+    // In a more complex scenario, this flow could call an LLM that *uses* the tool.
     return await geocodeTool(input);
   }
 );
