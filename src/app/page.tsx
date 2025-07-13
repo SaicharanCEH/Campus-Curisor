@@ -24,6 +24,7 @@ import { db } from '@/lib/firebase';
 import CruiserSidebar from '@/components/cruiser-sidebar';
 import { useJsApiLoader } from '@react-google-maps/api';
 import { AddStopForm } from '@/components/add-stop-form';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const DUMMY_BUSES: Bus[] = [
   { id: 'bus-3', routeId: 'route-2', position: { lat: 17.4025, lng: 78.5025 } },
@@ -41,6 +42,7 @@ export default function HomePage() {
   const [isAddStudentDialogOpen, setAddStudentDialogOpen] = useState(false);
   const [isAddRouteDialogOpen, setAddRouteDialogOpen] = useState(false);
   const [isAddStopDialogOpen, setAddStopDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   const { isLoaded, loadError } = useJsApiLoader({
@@ -68,10 +70,12 @@ export default function HomePage() {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
+      fetchRoutes();
+      setIsLoading(false);
+    } else {
+      router.push('/login');
     }
-    
-    fetchRoutes();
-  }, []);
+  }, [router]);
   
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -107,6 +111,23 @@ export default function HomePage() {
     setAddStopDialogOpen(false);
     await fetchRoutes();
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-full flex-col">
+        <DashboardHeader isAuthenticated={false} onLogout={() => {}} />
+        <div className="flex flex-1 overflow-hidden">
+          <aside className="w-80 border-r p-4">
+            <Skeleton className="h-8 w-3/4 mb-4" />
+            <Skeleton className="h-full w-full" />
+          </aside>
+          <main className="flex-1 p-4">
+            <Skeleton className="h-full w-full" />
+          </main>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen w-full flex-col">
