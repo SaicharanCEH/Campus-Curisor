@@ -134,8 +134,6 @@ export function UserTable() {
                 <TableHead>Role</TableHead>
                 <TableHead>Identifier</TableHead>
                 <TableHead>Password</TableHead>
-                <TableHead>Bus Number</TableHead>
-                <TableHead>Pickup</TableHead>
             </TableRow>
             </TableHeader>
             <TableBody>
@@ -148,13 +146,11 @@ export function UserTable() {
                     <TableCell>{user.role}</TableCell>
                     <TableCell>{user.role === 'student' ? user.rollNumber : user.username}</TableCell>
                     <TableCell>{user.password}</TableCell>
-                    <TableCell>{user.busNumber || 'N/A'}</TableCell>
-                    <TableCell>{user.pickupLocation ? `${user.pickupLocation} at ${user.pickupTime}` : 'N/A'}</TableCell>
                 </TableRow>
                 ))
             ) : (
                 <TableRow>
-                    <TableCell colSpan={8} className="text-center">No users found.</TableCell>
+                    <TableCell colSpan={6} className="text-center">No users found.</TableCell>
                 </TableRow>
             )}
             </TableBody>
