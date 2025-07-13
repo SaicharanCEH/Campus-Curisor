@@ -7,14 +7,25 @@
  * - GeocodeAddressInput - The input type for the geocodeAddress function.
  * - GeocodeAddressOutput - The return type for the geocodeAddress function.
  */
-import fetch from 'node-fetch';
-    if (typeof globalThis.fetch === 'undefined') {
-      globalThis.fetch = fetch;
-    }
+import nodeFetch from 'node-fetch';
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import NodeGeocoder from 'node-geocoder';
+
+// Custom fetch to include User-Agent header for Nominatim policy compliance.
+const customFetch = (url: RequestInfo, options?: RequestInit): Promise<Response> => {
+  const headers = {
+    ...options?.headers,
+    'User-Agent': 'CampusCruiserApp/1.0 (https://campus-cruiser-app.com)',
+  };
+  return nodeFetch(url, { ...options, headers });
+};
+
+// Ensure global fetch is available for node-geocoder if it isn't already.
+if (typeof globalThis.fetch === 'undefined') {
+  (globalThis as any).fetch = customFetch;
+}
 
 const GeocodeAddressInputSchema = z.object({
   address: z.string().describe('The address to geocode.'),
@@ -27,13 +38,10 @@ const GeocodeAddressOutputSchema = z.object({
 });
 export type GeocodeAddressOutput = z.infer<typeof GeocodeAddressOutputSchema>;
 
-// Configure the geocoder. Using a provider like OpenStreetMap doesn't require an API key.
-// In a production app, you might want to use Google Maps Platform or another provider with an API key.
+// Configure the geocoder.
 const geocoder = NodeGeocoder({
   provider: 'openstreetmap',
-  fetch,
-  // Adding referrer for Nominatim usage policy compliance.
-  referrer: 'https://campus-cruiser-app.com' // Identifies the application.
+  fetch: customFetch,
  });
 
 const geocodeTool = ai.defineTool(
@@ -55,7 +63,6 @@ const geocodeTool = ai.defineTool(
       // This is a specific error if no results are found.
       throw new Error(`No coordinates found for address: "${address}". Please try a more specific location.`);
     } catch (error) {
-      console.error('Geocoding error:', error);
       // This catches errors from the geocoding service itself (e.g., network issues, timeouts).
       const message = error instanceof Error ? error.message : String(error);
       // We check if the message is our specific "No coordinates found" message. If so, we re-throw it as is.
