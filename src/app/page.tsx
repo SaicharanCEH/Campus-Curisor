@@ -188,14 +188,14 @@ export default function HomePage() {
                         <DialogTrigger asChild>
                             <Button variant="outline">
                             <View className="mr-2 h-4 w-4" />
-                            View Users
+                            View Students
                             </Button>
                         </DialogTrigger>
                         <DialogContent className="max-w-4xl">
                             <DialogHeader>
-                            <DialogTitle>User Management</DialogTitle>
+                            <DialogTitle>Student Management</DialogTitle>
                             <DialogDescription>
-                                View and manage all registered users in the database.
+                                View and manage all registered students in the database.
                             </DialogDescription>
                             </DialogHeader>
                             <UserTable />
@@ -217,5 +217,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    

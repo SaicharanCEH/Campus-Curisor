@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, getDocs, DocumentData } from 'firebase/firestore';
+import { collection, getDocs, DocumentData, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import {
   Table,
@@ -16,7 +16,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from './ui/skeleton';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { deleteAllUsers } from '@/ai/flows/delete-all-users';
+import { deleteAllStudents } from '@/ai/flows/delete-all-students';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,23 +31,25 @@ import {
 import { Trash2 } from 'lucide-react';
 
 export function UserTable() {
-  const [users, setUsers] = useState<DocumentData[]>([]);
+  const [students, setStudents] = useState<DocumentData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const fetchUsers = async () => {
+  const fetchStudents = async () => {
     setLoading(true);
     try {
-      const querySnapshot = await getDocs(collection(db, 'users'));
-      const usersData = querySnapshot.docs.map(doc => ({
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('role', '==', 'student'));
+      const querySnapshot = await getDocs(q);
+      const studentsData = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
       }));
-      setUsers(usersData);
+      setStudents(studentsData);
     } catch (err) {
-      setError('Failed to fetch users. Please try again later.');
+      setError('Failed to fetch students. Please try again later.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -55,19 +57,19 @@ export function UserTable() {
   };
 
   useEffect(() => {
-    fetchUsers();
+    fetchStudents();
   }, []);
 
-  const handleClearUsers = async () => {
+  const handleClearStudents = async () => {
     setIsDeleting(true);
     try {
-      const result = await deleteAllUsers();
+      const result = await deleteAllStudents();
       if (result.success) {
         toast({
           title: 'Success',
-          description: 'All users have been deleted.',
+          description: 'All students have been deleted.',
         });
-        setUsers([]); // Clear users from state
+        setStudents([]); // Clear students from state
       } else {
         throw new Error(result.message || 'An unknown error occurred');
       }
@@ -102,9 +104,9 @@ export function UserTable() {
         <div className="flex justify-end mb-4">
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" disabled={users.length === 0}>
+                <Button variant="destructive" disabled={students.length === 0}>
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Clear All Users
+                  Clear All Students
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -112,12 +114,12 @@ export function UserTable() {
                   <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                   <AlertDialogDescription>
                     This action cannot be undone. This will permanently delete all
-                    user accounts from the database.
+                    student accounts from the database.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleClearUsers} disabled={isDeleting}>
+                  <AlertDialogAction onClick={handleClearStudents} disabled={isDeleting}>
                     {isDeleting ? 'Deleting...' : 'Continue'}
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -131,26 +133,24 @@ export function UserTable() {
                 <TableHead>Full Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Phone</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Identifier</TableHead>
+                <TableHead>Roll Number</TableHead>
                 <TableHead>Password</TableHead>
             </TableRow>
             </TableHeader>
             <TableBody>
-            {users.length > 0 ? (
-                users.map(user => (
+            {students.length > 0 ? (
+                students.map(user => (
                 <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.fullName}</TableCell>
                     <TableCell>{user.email}</TableCell>
                     <TableCell>{user.phoneNumber || 'N/A'}</TableCell>
-                    <TableCell>{user.role}</TableCell>
-                    <TableCell>{user.role === 'student' ? user.rollNumber : user.username}</TableCell>
+                    <TableCell>{user.rollNumber}</TableCell>
                     <TableCell>{user.password}</TableCell>
                 </TableRow>
                 ))
             ) : (
                 <TableRow>
-                    <TableCell colSpan={6} className="text-center">No users found.</TableCell>
+                    <TableCell colSpan={5} className="text-center">No students found.</TableCell>
                 </TableRow>
             )}
             </TableBody>
