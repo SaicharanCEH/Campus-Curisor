@@ -13,7 +13,8 @@ import { ScrollArea } from './ui/scroll-area';
 import { geocodeAddress } from '@/ai/flows/geocode-address';
 
 interface Stop {
-  name: string;
+  rollNumber: string;
+  studentName: string;
   location: string;
   time: string;
 }
@@ -40,7 +41,7 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
       busNumber: '',
       driverName: '',
       driverMobile: '',
-      stops: [{ name: '', location: '', time: '' }],
+      stops: [{ rollNumber: '', studentName: '', location: '', time: '' }],
     },
   });
 
@@ -64,8 +65,9 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
             throw new Error('Geocoding failed');
           }
           return {
-            id: `${data.name.replace(/\s+/g, '-').toLowerCase()}-${stop.name.replace(/\s+/g, '-').toLowerCase()}-${Math.random().toString(36).substr(2, 5)}`,
-            name: stop.name,
+            id: `${data.name.replace(/\s+/g, '-').toLowerCase()}-${stop.studentName.replace(/\s+/g, '-').toLowerCase()}-${Math.random().toString(36).substr(2, 5)}`,
+            studentName: stop.studentName,
+            rollNumber: stop.rollNumber,
             location: stop.location,
             time: stop.time,
             position: { lat, lng },
@@ -149,13 +151,21 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
         <ScrollArea className="h-48 pr-4">
           <div className="space-y-4">
             {fields.map((field, index) => (
-              <div key={field.id} className="grid grid-cols-12 gap-x-2 gap-y-2 p-3 border rounded-md relative">
+              <div key={field.id} className="grid grid-cols-12 gap-x-2 gap-y-4 p-3 border rounded-md relative">
                 <div className="col-span-12 sm:col-span-6">
-                  <Label htmlFor={`stops.${index}.name`} className="text-xs">Stop Name</Label>
+                  <Label htmlFor={`stops.${index}.studentName`} className="text-xs">Student Name</Label>
                   <Input
-                    id={`stops.${index}.name`}
-                    placeholder="e.g., Library"
-                    {...register(`stops.${index}.name` as const, { required: true })}
+                    id={`stops.${index}.studentName`}
+                    placeholder="e.g., Jane Doe"
+                    {...register(`stops.${index}.studentName` as const, { required: true })}
+                  />
+                </div>
+                <div className="col-span-12 sm:col-span-6">
+                  <Label htmlFor={`stops.${index}.rollNumber`} className="text-xs">Roll Number</Label>
+                  <Input
+                    id={`stops.${index}.rollNumber`}
+                    placeholder="e.g., 21B81A0501"
+                    {...register(`stops.${index}.rollNumber` as const, { required: true })}
                   />
                 </div>
                 <div className="col-span-12 sm:col-span-6">
@@ -166,7 +176,7 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
                     {...register(`stops.${index}.location` as const, { required: true })}
                   />
                 </div>
-                <div className="col-span-9 sm:col-span-9">
+                <div className="col-span-9 sm:col-span-4">
                   <Label htmlFor={`stops.${index}.time`} className="text-xs">Time</Label>
                   <Input
                     id={`stops.${index}.time`}
@@ -174,7 +184,7 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
                     {...register(`stops.${index}.time` as const, { required: true })}
                   />
                 </div>
-                <div className="col-span-3 sm:col-span-3 flex items-end">
+                <div className="col-span-3 sm:col-span-2 flex items-end">
                     {fields.length > 1 && (
                      <Button type="button" variant="destructive" size="icon" className="h-9 w-9" onClick={() => remove(index)}>
                         <X className="h-4 w-4" />
@@ -189,7 +199,7 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
         <Button
           type="button"
           variant="outline"
-          onClick={() => append({ name: '', location: '', time: '' })}
+          onClick={() => append({ rollNumber: '', studentName: '', location: '', time: '' })}
         >
           <PlusCircle className="mr-2 h-4 w-4" />
           Add Stop

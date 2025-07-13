@@ -82,7 +82,7 @@ export default function MapPlaceholder({
           key={stop.id}
           position={stop.position}
           onClick={() => onSelectStop(stop)}
-          title={stop.name}
+          title={stop.studentName}
           icon={{
             url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
             scaledSize: new window.google.maps.Size(32, 32),

@@ -66,7 +66,7 @@ export default function CruiserSidebar({
                           onClick={() => onSelectStop(stop)}
                         >
                           <div className="flex justify-between items-center w-full">
-                            <span>{stop.name}</span>
+                            <span>{stop.studentName}</span>
                             <div
                               role="button"
                               tabIndex={0}
@@ -97,7 +97,7 @@ export default function CruiserSidebar({
                     onClick={() => onSelectStop(stop)}
                   >
                     <div className="flex justify-between items-center w-full">
-                      <span>{stop.name}</span>
+                      <span>{stop.studentName}</span>
                       <div
                         role="button"
                         tabIndex={0}
@@ -122,7 +122,7 @@ export default function CruiserSidebar({
           <Card>
             <CardHeader>
               <CardTitle className="flex justify-between items-center">
-                <span>{selectedStop.name}</span>
+                <span>{selectedStop.studentName}</span>
                 <div
                   role="button"
                   tabIndex={0}

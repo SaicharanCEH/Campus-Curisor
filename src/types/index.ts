@@ -1,6 +1,7 @@
 export interface Stop {
   id: string;
-  name: string;
+  studentName: string;
+  rollNumber: string;
   location: string;
   time: string;
   eta?: string;
