@@ -11,7 +11,6 @@ import { collection, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { ScrollArea } from './ui/scroll-area';
 import { geocodeAddress } from '@/ai/flows/geocode-address';
-import { Autocomplete } from '@react-google-maps/api';
 
 interface Stop {
   rollNumber: string;
@@ -30,15 +29,13 @@ interface AddRouteFormValues {
 
 interface AddRouteFormProps {
   onRouteCreated?: () => void;
-  isLoaded: boolean;
 }
 
-export function AddRouteForm({ onRouteCreated, isLoaded }: AddRouteFormProps) {
+export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [autocompleteInstances, setAutocompleteInstances] = useState<(google.maps.places.Autocomplete | null)[]>([]);
-
-  const { register, control, handleSubmit, reset, setValue, formState: { errors } } = useForm<AddRouteFormValues>({
+  
+  const { register, control, handleSubmit, reset, formState: { errors } } = useForm<AddRouteFormValues>({
     defaultValues: {
       name: '',
       busNumber: '',
@@ -52,25 +49,6 @@ export function AddRouteForm({ onRouteCreated, isLoaded }: AddRouteFormProps) {
     control,
     name: 'stops',
   });
-  
-  const handleAutocompleteLoad = (index: number, autocomplete: google.maps.places.Autocomplete) => {
-    setAutocompleteInstances(prev => {
-        const newInstances = [...prev];
-        newInstances[index] = autocomplete;
-        return newInstances;
-    });
-  };
-
-  const handlePlaceChanged = (index: number) => {
-    const autocomplete = autocompleteInstances[index];
-    if (autocomplete) {
-        const place = autocomplete.getPlace();
-        if (place && place.formatted_address) {
-            setValue(`stops.${index}.location`, place.formatted_address);
-        }
-    }
-  };
-
 
   const onSubmit = async (data: AddRouteFormValues) => {
     setIsSubmitting(true);
@@ -137,9 +115,6 @@ export function AddRouteForm({ onRouteCreated, isLoaded }: AddRouteFormProps) {
     }
   };
 
-  if (!isLoaded) {
-    return <div>Loading Map Utilities...</div>;
-  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="grid gap-6">
@@ -208,16 +183,11 @@ export function AddRouteForm({ onRouteCreated, isLoaded }: AddRouteFormProps) {
                 </div>
                 <div className="col-span-12 sm:col-span-6">
                   <Label htmlFor={`stops.${index}.location`} className="text-xs">Location</Label>
-                   <Autocomplete
-                      onLoad={(autocomplete) => handleAutocompleteLoad(index, autocomplete)}
-                      onPlaceChanged={() => handlePlaceChanged(index)}
-                    >
-                        <Input
-                            id={`stops.${index}.location`}
-                            placeholder="e.g., Main Gate"
-                            {...register(`stops.${index}.location` as const, { required: true })}
-                        />
-                   </Autocomplete>
+                    <Input
+                        id={`stops.${index}.location`}
+                        placeholder="e.g., Main Gate"
+                        {...register(`stops.${index}.location` as const, { required: true })}
+                    />
                 </div>
                 <div className="col-span-9 sm:col-span-4">
                   <Label htmlFor={`stops.${index}.time`} className="text-xs">Time</Label>

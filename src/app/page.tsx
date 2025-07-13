@@ -147,7 +147,7 @@ export default function HomePage() {
                                 Define a new route with its name and stops.
                             </DialogDescription>
                             </DialogHeader>
-                            <AddRouteForm onRouteCreated={onRouteCreated} isLoaded={isLoaded} />
+                            <AddRouteForm onRouteCreated={onRouteCreated} />
                         </DialogContent>
                         </Dialog>
                         <Dialog>
