@@ -66,7 +66,7 @@ export function AddRouteForm({ onRouteCreated, isGoogleMapsLoaded }: AddRouteFor
             const studentList = querySnapshot.docs.map(doc => {
                 const data = doc.data();
                 return { 
-                    value: data.rollNumber.toLowerCase(), // for combobox matching
+                    value: data.rollNumber.toLowerCase(), // for combobox matching and storing
                     label: data.rollNumber, // for display
                     fullName: data.fullName
                 };
@@ -102,11 +102,16 @@ export function AddRouteForm({ onRouteCreated, isGoogleMapsLoaded }: AddRouteFor
     setIsSubmitting(true);
     try {
       // Validation to ensure a student is selected for each stop
-       for (const stop of data.stops) {
-          if (!stop.rollNumber) {
-            throw new Error(`A student must be selected for each stop.`);
-          }
+      for (const [index, stop] of data.stops.entries()) {
+        if (!stop.rollNumber) {
+          throw new Error(`A student must be selected for stop #${index + 1}.`);
         }
+        // Double-check if the roll number exists in our fetched list
+        const studentExists = students.some(s => s.value === stop.rollNumber.toLowerCase());
+        if (!studentExists) {
+            throw new Error(`Invalid student selected for stop #${index + 1}.`);
+        }
+      }
       
       const stopsWithPositions = await Promise.all(
         data.stops.map(async (stop) => {
@@ -227,7 +232,7 @@ export function AddRouteForm({ onRouteCreated, isGoogleMapsLoaded }: AddRouteFor
                                 value={field.value}
                                 onChange={(value) => {
                                     const selectedStudent = students.find(s => s.value === value);
-                                    field.onChange(selectedStudent ? selectedStudent.label : '');
+                                    field.onChange(value); // Set the form value to the selected value
                                     setValue(`stops.${index}.studentName`, selectedStudent ? selectedStudent.fullName : '');
                                 }}
                             />
@@ -238,7 +243,7 @@ export function AddRouteForm({ onRouteCreated, isGoogleMapsLoaded }: AddRouteFor
                   <Label htmlFor={`stops.${index}.studentName`} className="text-xs">Student Name</Label>
                   <Input
                     id={`stops.${index}.studentName`}
-                    placeholder="e.g., Jane Doe"
+                    placeholder="Student name (auto-filled)"
                     {...register(`stops.${index}.studentName` as const, { required: 'Student name is required' })}
                     readOnly
                     className="bg-muted"
