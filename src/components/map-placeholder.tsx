@@ -21,6 +21,8 @@ const defaultCenter = {
   lng: 78.5961,
 };
 
+const libraries: ('places' | 'drawing' | 'geometry' | 'localContext' | 'visualization')[] = ['places'];
+
 export default function MapPlaceholder({
   buses,
   selectedRoute,
@@ -28,6 +30,7 @@ export default function MapPlaceholder({
 }: MapPlaceholderProps) {
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
+    libraries,
   });
 
   const mapRef = useRef<google.maps.Map | null>(null);
