@@ -30,25 +30,50 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Trash2 } from 'lucide-react';
+import type { Route } from '@/types';
+
+interface StudentWithLocation extends DocumentData {
+    location?: string;
+}
 
 export function UserTable() {
-  const [students, setStudents] = useState<DocumentData[]>([]);
+  const [students, setStudents] = useState<StudentWithLocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
 
-  const fetchStudents = async () => {
+  const fetchStudentsAndLocations = async () => {
     setLoading(true);
     try {
+      // Fetch all routes to get stop information
+      const routesCollection = collection(db, 'routes');
+      const routeSnapshot = await getDocs(routesCollection);
+      const routesList = routeSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Route));
+      
+      const stopLocationMap = new Map<string, string>();
+      routesList.forEach(route => {
+        route.stops.forEach(stop => {
+          // Store the latest location for each roll number
+          stopLocationMap.set(stop.rollNumber.toUpperCase(), stop.location);
+        });
+      });
+
+      // Fetch all students
       const usersRef = collection(db, 'users');
       const q = query(usersRef, where('role', '==', 'student'));
       const querySnapshot = await getDocs(q);
-      const studentsData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      const studentsData = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        const studentRollNumber = data.rollNumber?.toUpperCase();
+        return {
+          id: doc.id,
+          ...data,
+          location: stopLocationMap.get(studentRollNumber) || 'Not Assigned',
+        };
+      });
+
       setStudents(studentsData);
     } catch (err) {
       setError('Failed to fetch students. Please try again later.');
@@ -58,8 +83,9 @@ export function UserTable() {
     }
   };
 
+
   useEffect(() => {
-    fetchStudents();
+    fetchStudentsAndLocations();
   }, []);
 
   const handleClearStudents = async () => {
@@ -159,8 +185,9 @@ export function UserTable() {
             <TableRow>
                 <TableHead>Full Name</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Phone</TableHead>
                 <TableHead>Roll Number</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>Phone</TableHead>
                 <TableHead>Password</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -171,8 +198,9 @@ export function UserTable() {
                 <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.fullName}</TableCell>
                     <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.phoneNumber || 'N/A'}</TableCell>
                     <TableCell>{user.rollNumber}</TableCell>
+                    <TableCell>{user.location}</TableCell>
+                    <TableCell>{user.phoneNumber || 'N/A'}</TableCell>
                     <TableCell>{user.password}</TableCell>
                     <TableCell className="text-right">
                        <AlertDialog>
@@ -205,7 +233,7 @@ export function UserTable() {
                 ))
             ) : (
                 <TableRow>
-                    <TableCell colSpan={6} className="text-center">No students found.</TableCell>
+                    <TableCell colSpan={7} className="text-center">No students found.</TableCell>
                 </TableRow>
             )}
             </TableBody>
