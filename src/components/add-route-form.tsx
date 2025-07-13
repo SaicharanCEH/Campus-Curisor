@@ -41,7 +41,7 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
       busNumber: '',
       driverName: '',
       driverMobile: '',
-      stops: [{ name: '', location: '', time: '', lat: 0, lng: 0 }],
+      stops: [{ name: '', location: '', time: '', lat: 17.1966, lng: 78.5961 }],
     },
   });
 
@@ -198,7 +198,7 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
         <Button
           type="button"
           variant="outline"
-          onClick={() => append({ name: '', location: '', time: '', lat: 0, lng: 0 })}
+          onClick={() => append({ name: '', location: '', time: '', lat: 17.1966, lng: 78.5961 })}
         >
           <PlusCircle className="mr-2 h-4 w-4" />
           Add Stop

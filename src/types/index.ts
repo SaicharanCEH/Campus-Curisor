@@ -3,6 +3,7 @@ export interface Stop {
   name: string;
   location: string;
   time: string;
+  eta?: string;
   position: { lat: number; lng: number };
 }
 

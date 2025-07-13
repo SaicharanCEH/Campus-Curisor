@@ -20,6 +20,7 @@ import { UserTable } from '@/components/user-table';
 import { AddRouteForm } from '@/components/add-route-form';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import CruiserSidebar from '@/components/cruiser-sidebar';
 
 const DUMMY_BUSES: Bus[] = [
   { id: 'bus-3', routeId: 'route-2', position: { lat: 17.4025, lng: 78.5025 } },
@@ -29,6 +30,8 @@ const DUMMY_BUSES: Bus[] = [
 export default function HomePage() {
   const [routes, setRoutes] = useState<Route[]>([]);
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
+  const [selectedStop, setSelectedStop] = useState<Stop | null>(null);
+  const [favoriteStops, setFavoriteStops] = useState<string[]>([]);
   const [user, setUser] = useState<{ fullName: string; role: string } | null>(null);
   const [isAddStudentDialogOpen, setAddStudentDialogOpen] = useState(false);
   const [isAddRouteDialogOpen, setAddRouteDialogOpen] = useState(false);
@@ -58,9 +61,19 @@ export default function HomePage() {
     router.push('/login');
   };
 
-  const handleStopSelect = (stop: Stop) => {
-    console.log('Selected stop:', stop);
-    alert(`Selected stop: ${stop.name}`);
+  const handleStopSelect = (stop: Stop | null) => {
+    setSelectedStop(stop);
+  };
+  
+  const handleRouteSelect = (route: Route | null) => {
+    setSelectedRoute(route);
+    setSelectedStop(null); // Reset stop when route changes
+  };
+
+  const handleToggleFavorite = (stopId: string) => {
+    setFavoriteStops(prev => 
+      prev.includes(stopId) ? prev.filter(id => id !== stopId) : [...prev, stopId]
+    );
   };
 
   const onUserCreated = () => {
@@ -76,93 +89,86 @@ export default function HomePage() {
     setRoutes(routesList);
   };
 
-
   return (
-    <div className="flex flex-col min-h-screen">
-      <DashboardHeader isAuthenticated={!!user} onLogout={handleLogout} />
-      <main className="flex flex-1 flex-col items-center justify-center gap-6 p-8">
-        <h1 className="text-2xl font-bold">Campus Cruiser 🚌</h1>
-        {user && (
-          <div className="text-center">
-            <p className="text-lg">Welcome, {user.fullName}!</p>
-            <p className="text-md text-muted-foreground">You are logged in as a {user.role}.</p>
-          </div>
-        )}
-        {user?.role === 'admin' && (
-          <div className="flex gap-4">
-            <Dialog open={isAddStudentDialogOpen} onOpenChange={setAddStudentDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Add User
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Add a New User</DialogTitle>
-                  <DialogDescription>
-                    Create a new student or admin account.
-                  </DialogDescription>
-                </DialogHeader>
-                <SignupForm onUserCreated={onUserCreated} />
-              </DialogContent>
-            </Dialog>
-             <Dialog open={isAddRouteDialogOpen} onOpenChange={setAddRouteDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <BusIcon className="mr-2 h-4 w-4" />
-                  Add Route
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Add a New Bus Route</DialogTitle>
-                  <DialogDescription>
-                    Define a new route with its name and stops.
-                  </DialogDescription>
-                </DialogHeader>
-                <AddRouteForm onRouteCreated={onRouteCreated} />
-              </DialogContent>
-            </Dialog>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline">
-                  <View className="mr-2 h-4 w-4" />
-                  View Users
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl">
-                <DialogHeader>
-                  <DialogTitle>User Management</DialogTitle>
-                  <DialogDescription>
-                    View and manage all registered users in the database.
-                  </DialogDescription>
-                </DialogHeader>
-                <UserTable />
-              </DialogContent>
-            </Dialog>
-          </div>
-        )}
-        <div className="flex gap-4">
-          {routes.map((route) => (
-            <button
-              key={route.id}
-              onClick={() => setSelectedRoute(route)}
-              className={`px-4 py-2 rounded ${
-                selectedRoute?.id === route.id ? 'bg-primary text-white' : 'bg-gray-200'
-              }`}
-            >
-              {route.name}
-            </button>
-          ))}
+    <div className="flex h-screen w-full flex-col">
+       <DashboardHeader isAuthenticated={!!user} onLogout={handleLogout} />
+        <div className="flex flex-1 overflow-hidden">
+            <aside className="w-80 border-r overflow-y-auto">
+                <CruiserSidebar
+                    routes={routes}
+                    selectedRoute={selectedRoute}
+                    onSelectRoute={handleRouteSelect}
+                    selectedStop={selectedStop}
+                    onSelectStop={handleStopSelect}
+                    favoriteStops={favoriteStops}
+                    onToggleFavorite={handleToggleFavorite}
+                />
+            </aside>
+            <main className="flex-1 flex flex-col items-center justify-start p-4 gap-4">
+                 {user?.role === 'admin' && (
+                    <div className="flex gap-4 self-start">
+                        <Dialog open={isAddStudentDialogOpen} onOpenChange={setAddStudentDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add User
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                            <DialogTitle>Add a New User</DialogTitle>
+                            <DialogDescription>
+                                Create a new student or admin account.
+                            </DialogDescription>
+                            </DialogHeader>
+                            <SignupForm onUserCreated={onUserCreated} />
+                        </DialogContent>
+                        </Dialog>
+                        <Dialog open={isAddRouteDialogOpen} onOpenChange={setAddRouteDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button>
+                            <BusIcon className="mr-2 h-4 w-4" />
+                            Add Route
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-2xl">
+                            <DialogHeader>
+                            <DialogTitle>Add a New Bus Route</DialogTitle>
+                            <DialogDescription>
+                                Define a new route with its name and stops.
+                            </DialogDescription>
+                            </DialogHeader>
+                            <AddRouteForm onRouteCreated={onRouteCreated} />
+                        </DialogContent>
+                        </Dialog>
+                        <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="outline">
+                            <View className="mr-2 h-4 w-4" />
+                            View Users
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl">
+                            <DialogHeader>
+                            <DialogTitle>User Management</DialogTitle>
+                            <DialogDescription>
+                                View and manage all registered users in the database.
+                            </DialogDescription>
+                            </DialogHeader>
+                            <UserTable />
+                        </DialogContent>
+                        </Dialog>
+                    </div>
+                )}
+                <div className="w-full h-full">
+                    <MapPlaceholder
+                        buses={DUMMY_BUSES.filter(bus => bus.routeId === selectedRoute?.id)}
+                        selectedRoute={selectedRoute}
+                        onSelectStop={handleStopSelect}
+                    />
+                </div>
+            </main>
         </div>
-
-      </main>
-      <MapPlaceholder
-        buses={DUMMY_BUSES.filter(bus => bus.routeId === selectedRoute?.id)}
-        selectedRoute={selectedRoute}
-        onSelectStop={handleStopSelect}
-      />
     </div>
   );
 }

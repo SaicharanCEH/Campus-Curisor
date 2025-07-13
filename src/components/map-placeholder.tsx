@@ -12,7 +12,7 @@ interface MapPlaceholderProps {
 
 const containerStyle = {
   width: '100%',
-  height: '600px',
+  height: '100%',
 };
 
 // Center of your campus
@@ -26,7 +26,7 @@ export default function MapPlaceholder({
   selectedRoute,
   onSelectStop,
 }: MapPlaceholderProps) {
-  const { isLoaded } = useJsApiLoader({
+  const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
   });
 
@@ -36,6 +36,10 @@ export default function MapPlaceholder({
     mapRef.current = map;
   }, []);
 
+  if (loadError) {
+    return <p>Error loading map</p>
+  }
+
   if (!isLoaded) return <p>Loading Map...</p>;
 
   return (
@@ -44,6 +48,10 @@ export default function MapPlaceholder({
       center={defaultCenter}
       zoom={15}
       onLoad={onLoad}
+      options={{
+        disableDefaultUI: true,
+        zoomControl: true,
+      }}
     >
       {/* College Marker */}
       <Marker
@@ -76,8 +84,8 @@ export default function MapPlaceholder({
           onClick={() => onSelectStop(stop)}
           title={stop.name}
           icon={{
-            url: 'https://img.icons8.com/ios-filled/50/ff0000/marker.png',
-            scaledSize: new window.google.maps.Size(35, 35),
+            url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+            scaledSize: new window.google.maps.Size(32, 32),
           }}
         />
       ))}

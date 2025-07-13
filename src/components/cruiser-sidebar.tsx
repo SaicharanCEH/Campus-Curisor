@@ -36,7 +36,7 @@ export default function CruiserSidebar({
   const favoritedStopDetails = allStops.filter(stop => favoriteStops.includes(stop.id));
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-card text-card-foreground">
       <div className="p-4 border-b">
         <h2 className="text-xl font-bold font-headline">Routes & Stops</h2>
       </div>
@@ -136,7 +136,7 @@ export default function CruiserSidebar({
             <CardContent>
               <div className="flex items-center text-lg">
                 <Clock className="h-5 w-5 mr-2 text-primary" />
-                <span>Next arrival: <span className="font-bold">{selectedStop.eta}</span></span>
+                <span>Scheduled Time: <span className="font-bold">{selectedStop.time}</span></span>
               </div>
             </CardContent>
           </Card>
