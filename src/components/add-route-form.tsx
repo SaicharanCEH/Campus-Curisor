@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useFieldArray, useForm, Controller } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -157,8 +157,15 @@ export function AddRouteForm({ onRouteCreated, isGoogleMapsLoaded }: AddRouteFor
             <Label htmlFor="driverMobile">Driver Mobile</Label>
             <Input
               id="driverMobile"
-              placeholder="e.g., 555-123-4567"
-              {...register('driverMobile', { required: "Driver's mobile number is required" })}
+              type="tel"
+              placeholder="e.g., 9876543210"
+              {...register('driverMobile', { 
+                  required: "Driver's mobile number is required",
+                  pattern: {
+                      value: /^\d{10}$/,
+                      message: "Mobile number must be 10 digits."
+                  }
+              })}
             />
             {errors.driverMobile && <p className="text-destructive text-sm">{errors.driverMobile.message}</p>}
           </div>
@@ -186,7 +193,7 @@ export function AddRouteForm({ onRouteCreated, isGoogleMapsLoaded }: AddRouteFor
                     {...register(`stops.${index}.rollNumber` as const, { required: true })}
                   />
                 </div>
-                <div className="col-span-12 sm:col-span-6">
+                <div className="col-span-12">
                   <Label htmlFor={`stops.${index}.location`} className="text-xs">Location</Label>
                   {isGoogleMapsLoaded ? (
                      <Controller
