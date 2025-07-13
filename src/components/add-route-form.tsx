@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef } from 'react';
 import { useFieldArray, useForm, Controller } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -69,6 +69,12 @@ export function AddRouteForm({ onRouteCreated, isLoaded, loadError }: AddRouteFo
           lat: place.geometry.location.lat(),
           lng: place.geometry.location.lng(),
         }, { shouldValidate: true });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Location not found',
+          description: 'Please select a valid location from the dropdown.',
+        });
       }
     }
   };
@@ -78,7 +84,7 @@ export function AddRouteForm({ onRouteCreated, isLoaded, loadError }: AddRouteFo
     try {
       const stopsWithPositions = data.stops.map((stop) => {
         if (!stop.position || stop.position.lat === 0 || stop.position.lng === 0) {
-          throw new Error(`Location for stop "${stop.location}" is not valid. Please select a location from the suggestions.`);
+          throw new Error(`Location for student "${stop.studentName}" is not valid. Please select a location from the suggestions.`);
         }
         return {
           id: `${data.name.replace(/\s+/g, '-').toLowerCase()}-${stop.studentName.replace(/\s+/g, '-').toLowerCase()}-${Math.random().toString(36).substr(2, 5)}`,
@@ -118,7 +124,7 @@ export function AddRouteForm({ onRouteCreated, isLoaded, loadError }: AddRouteFo
     }
   };
   
-  if (loadError) return <div>Error loading maps. Please check the API key and enabled APIs in your Google Cloud project.</div>;
+  if (loadError) return <div>Error loading maps. Please check the API key and ensure the Places API is enabled in your Google Cloud project.</div>;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="grid gap-6">
@@ -192,7 +198,7 @@ export function AddRouteForm({ onRouteCreated, isLoaded, loadError }: AddRouteFo
                         control={control}
                         name={`stops.${index}.location`}
                         rules={{ required: 'Location is required.' }}
-                        render={({ field: { onChange, value } }) => (
+                        render={({ field }) => (
                             <Autocomplete
                                 onLoad={(autocomplete) => onAutocompleteLoad(index, autocomplete)}
                                 onPlaceChanged={() => onPlaceChanged(index)}
@@ -201,8 +207,7 @@ export function AddRouteForm({ onRouteCreated, isLoaded, loadError }: AddRouteFo
                                 <Input
                                     id={`stops.${index}.location`}
                                     placeholder="e.g., Main Gate, VNRVJIET"
-                                    defaultValue={value}
-                                    onChange={onChange}
+                                    {...field}
                                 />
                             </Autocomplete>
                         )}
