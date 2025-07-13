@@ -63,19 +63,7 @@ export default function HomePage() {
     const routesCollection = collection(db, 'routes');
     const routeSnapshot = await getDocs(routesCollection);
     const routesList = routeSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Route));
-    
     setRoutes(routesList);
-
-    const currentSelectedRouteId = selectedRoute?.id;
-    if (currentSelectedRouteId) {
-      const newSelectedRoute = routesList.find(r => r.id === currentSelectedRouteId) || null;
-      setSelectedRoute(newSelectedRoute);
-    } else if (routesList.length > 0) {
-      setSelectedRoute(routesList[0]);
-    } else {
-      setSelectedRoute(null);
-      setSelectedStop(null);
-    }
     return routesList;
   };
 
@@ -104,6 +92,35 @@ export default function HomePage() {
       
       fetchRoutes().then(routesData => {
         initializeBuses(routesData);
+
+        // Student-specific logic
+        if (parsedUser.role === 'student' && parsedUser.identifier) {
+          let studentRoute: Route | null = null;
+          let studentStop: Stop | null = null;
+
+          for (const route of routesData) {
+            const foundStop = route.stops.find(
+              stop => stop.rollNumber.toUpperCase() === parsedUser.identifier.toUpperCase()
+            );
+            if (foundStop) {
+              studentRoute = route;
+              studentStop = foundStop;
+              break;
+            }
+          }
+
+          if (studentRoute && studentStop) {
+            setSelectedRoute(studentRoute);
+            setSelectedStop(studentStop);
+          } else if (routesData.length > 0) {
+             // Fallback for students not assigned a stop or for admins
+            setSelectedRoute(routesData[0]);
+          }
+        } else if (routesData.length > 0) {
+          // Default behavior for admins or if no user role logic applies
+          setSelectedRoute(routesData[0]);
+        }
+        
         setIsLoading(false);
       });
     } else {
@@ -182,22 +199,19 @@ export default function HomePage() {
 
   const onRouteCreated = async () => {
     setAddRouteDialogOpen(false);
-    const newRoutes = await fetchRoutes();
-    initializeBuses(newRoutes);
+    await fetchRoutes();
   };
 
   const onStopAdded = async () => {
     setAddStopDialogOpen(false);
-    const newRoutes = await fetchRoutes();
-    initializeBuses(newRoutes);
+    await fetchRoutes();
   };
 
   const handleDeleteRoute = async (routeId: string) => {
     const result = await deleteRoute(routeId);
     if (result.success) {
       toast({ title: 'Route Deleted', description: 'The route has been successfully removed.' });
-      const newRoutes = await fetchRoutes();
-      initializeBuses(newRoutes);
+      await fetchRoutes();
     } else {
       toast({ variant: 'destructive', title: 'Error', description: result.message });
     }
@@ -207,8 +221,7 @@ export default function HomePage() {
     const result = await deleteStop({ routeId, stopId });
     if (result.success) {
       toast({ title: 'Stop Deleted', description: 'The stop has been successfully removed.' });
-      const newRoutes = await fetchRoutes();
-      initializeBuses(newRoutes);
+      await fetchRoutes();
     } else {
       toast({ variant: 'destructive', title: 'Error', description: result.message });
     }
