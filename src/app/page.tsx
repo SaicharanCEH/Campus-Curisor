@@ -29,18 +29,14 @@ import { deleteRoute } from '@/ai/flows/delete-route';
 import { deleteStop } from '@/ai/flows/delete-stop';
 import { useToast } from '@/hooks/use-toast';
 
-const DUMMY_BUS_DATA: Bus[] = [
-  { id: 'bus-1', routeId: 'route-1', position: { lat: 17.395, lng: 78.495 } },
-  { id: 'bus-2', routeId: 'route-1', position: { lat: 17.415, lng: 78.515 } },
-  { id: 'bus-3', routeId: 'route-2', position: { lat: 17.4025, lng: 78.5025 } },
-  { id: 'bus-4', routeId: 'route-2', position: { lat: 17.4125, lng: 78.5125 } },
-];
+const DUMMY_BUS_IDS = ['bus-1', 'bus-2', 'bus-3', 'bus-4'];
+const SIMULATION_SPEED = 0.0001; // Controls how fast buses move
 
 const libraries: ('places' | 'drawing' | 'geometry' | 'localContext' | 'visualization')[] = ['places'];
 
 export default function HomePage() {
   const [routes, setRoutes] = useState<Route[]>([]);
-  const [buses, setBuses] = useState<Bus[]>(DUMMY_BUS_DATA);
+  const [buses, setBuses] = useState<Bus[]>([]);
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
   const [selectedStop, setSelectedStop] = useState<Stop | null>(null);
   const [favoriteStops, setFavoriteStops] = useState<string[]>([]);
@@ -74,34 +70,82 @@ export default function HomePage() {
       setSelectedRoute(null);
       setSelectedStop(null);
     }
+    return routesList;
   };
 
+  const initializeBuses = (routesData: Route[]) => {
+    const initialBuses: Bus[] = [];
+    routesData.forEach((route, index) => {
+      if (route.stops.length > 0) {
+        // Assign a bus ID from the dummy list
+        const busId = DUMMY_BUS_IDS[index % DUMMY_BUS_IDS.length];
+        initialBuses.push({
+          id: busId,
+          routeId: route.id,
+          position: route.stops[0].position, // Start at the first stop
+          currentStopIndex: 0,
+        });
+      }
+    });
+    setBuses(initialBuses);
+  };
+  
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
-      fetchRoutes();
-      setIsLoading(false);
+      fetchRoutes().then(routesData => {
+        initializeBuses(routesData);
+        setIsLoading(false);
+      });
     } else {
       router.push('/login');
     }
   }, [router]);
   
   useEffect(() => {
+    if (!routes.length || !buses.length) return;
+
     const interval = setInterval(() => {
-      setBuses(currentBuses => 
-        currentBuses.map(bus => ({
-          ...bus,
-          position: {
-            lat: bus.position.lat + (Math.random() - 0.5) * 0.001,
-            lng: bus.position.lng + (Math.random() - 0.5) * 0.001,
+      setBuses(currentBuses =>
+        currentBuses.map(bus => {
+          const route = routes.find(r => r.id === bus.routeId);
+          if (!route || route.stops.length === 0) {
+            return bus; // Keep bus stationary if route is invalid
           }
-        }))
+
+          const currentStop = route.stops[bus.currentStopIndex];
+          const nextStopIndex = (bus.currentStopIndex + 1) % route.stops.length;
+          const nextStop = route.stops[nextStopIndex];
+
+          const dx = nextStop.position.lng - currentStop.position.lng;
+          const dy = nextStop.position.lat - currentStop.position.lat;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          // If the bus is very close to the next stop, snap to it and update target
+          if (distance < SIMULATION_SPEED) {
+            return {
+              ...bus,
+              position: nextStop.position,
+              currentStopIndex: nextStopIndex,
+            };
+          }
+
+          // Otherwise, move towards the next stop
+          const newLat = bus.position.lat + (dy / distance) * SIMULATION_SPEED;
+          const newLng = bus.position.lng + (dx / distance) * SIMULATION_SPEED;
+
+          return {
+            ...bus,
+            position: { lat: newLat, lng: newLng },
+          };
+        })
       );
-    }, 3000); // Update every 3 seconds
+    }, 1000); // Update every second
 
     return () => clearInterval(interval);
-  }, []);
+  }, [buses, routes]);
+
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -130,19 +174,22 @@ export default function HomePage() {
 
   const onRouteCreated = async () => {
     setAddRouteDialogOpen(false);
-    await fetchRoutes();
+    const newRoutes = await fetchRoutes();
+    initializeBuses(newRoutes);
   };
 
   const onStopAdded = async () => {
     setAddStopDialogOpen(false);
-    await fetchRoutes();
+    const newRoutes = await fetchRoutes();
+    initializeBuses(newRoutes);
   };
 
   const handleDeleteRoute = async (routeId: string) => {
     const result = await deleteRoute(routeId);
     if (result.success) {
       toast({ title: 'Route Deleted', description: 'The route has been successfully removed.' });
-      await fetchRoutes();
+      const newRoutes = await fetchRoutes();
+      initializeBuses(newRoutes);
     } else {
       toast({ variant: 'destructive', title: 'Error', description: result.message });
     }
@@ -152,7 +199,8 @@ export default function HomePage() {
     const result = await deleteStop({ routeId, stopId });
     if (result.success) {
       toast({ title: 'Stop Deleted', description: 'The stop has been successfully removed.' });
-      await fetchRoutes();
+      const newRoutes = await fetchRoutes();
+      initializeBuses(newRoutes);
     } else {
       toast({ variant: 'destructive', title: 'Error', description: result.message });
     }
@@ -207,7 +255,7 @@ export default function HomePage() {
                     selectedStop={selectedStop}
                     onSelectStop={handleStopSelect}
                     favoriteStops={favoriteStops}
-                    onToggleFavorite={handleToggleFavorite}
+                    onToggleFavorite={onToggleFavorite}
                     onDeleteRoute={handleDeleteRoute}
                     onDeleteStop={handleDeleteStop}
                     onCapacityChange={handleCapacityChange}

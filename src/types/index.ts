@@ -27,4 +27,5 @@ export interface Bus {
   routeId: string;
   position: { lat: number; lng: number };
   capacity?: BusCapacity;
+  currentStopIndex: number;
 }
