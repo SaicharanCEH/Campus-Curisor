@@ -36,7 +36,7 @@ export function LoginForm() {
           title: 'Login Successful',
           description: `Welcome, Admin!`,
         });
-        localStorage.setItem('user', JSON.stringify({ fullName: 'Default Admin', role: 'admin', identifier: 'admin' }));
+        localStorage.setItem('user', JSON.stringify({ id: 'super-admin', fullName: 'Default Admin', role: 'admin', identifier: 'admin' }));
         router.push('/');
         return;
       }
@@ -72,7 +72,10 @@ export function LoginForm() {
         });
         
         localStorage.setItem('user', JSON.stringify({ 
+            id: userDoc.id,
             fullName: userData.fullName, 
+            email: userData.email,
+            phoneNumber: userData.phoneNumber,
             role: userData.role,
             identifier: valueToQuery 
         }));

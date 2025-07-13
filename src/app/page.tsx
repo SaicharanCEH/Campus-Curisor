@@ -29,8 +29,6 @@ import { deleteRoute } from '@/ai/flows/delete-route';
 import { deleteStop } from '@/ai/flows/delete-stop';
 import { useToast } from '@/hooks/use-toast';
 
-const DUMMY_BUS_IDS = ['bus-1', 'bus-2', 'bus-3', 'bus-4'];
-
 const libraries: ('places' | 'drawing' | 'geometry' | 'localContext' | 'visualization')[] = ['places'];
 
 interface User {
@@ -62,23 +60,6 @@ export default function HomePage() {
     const routesCollection = collection(db, 'routes');
     const routeSnapshot = await getDocs(routesCollection);
     return routeSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Route));
-  };
-
-  const initializeBuses = (routesData: Route[]) => {
-    const initialBuses: Bus[] = [];
-    routesData.forEach((route, index) => {
-      if (route.stops.length > 0) {
-        // Assign a bus ID from the dummy list
-        const busId = DUMMY_BUS_IDS[index % DUMMY_BUS_IDS.length];
-        initialBuses.push({
-          id: busId,
-          routeId: route.id,
-          position: route.stops[0].position, // Start at the first stop
-          currentStopIndex: 0,
-        });
-      }
-    });
-    setBuses(initialBuses);
   };
   
   useEffect(() => {
@@ -115,7 +96,6 @@ export default function HomePage() {
         }
         
         setRoutes(routesToDisplay);
-        initializeBuses(routesToDisplay);
 
         // Auto-select logic
         if (studentRoute && studentStop) {
