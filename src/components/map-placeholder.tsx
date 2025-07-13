@@ -1,6 +1,6 @@
 'use client';
 
-import { GoogleMap, Marker } from '@react-google-maps/api';
+import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
 import { useCallback, useRef } from 'react';
 import type { Bus as BusType, Route, Stop } from '@/types';
 
@@ -8,8 +8,6 @@ interface MapPlaceholderProps {
   buses: BusType[];
   selectedRoute: Route | null;
   onSelectStop: (stop: Stop) => void;
-  isLoaded: boolean;
-  loadError: Error | undefined;
 }
 
 const containerStyle = {
@@ -23,14 +21,20 @@ const defaultCenter = {
   lng: 78.5961,
 };
 
+const libraries: ('places' | 'drawing' | 'geometry' | 'localContext' | 'visualization')[] = [];
+
+
 export default function MapPlaceholder({
   buses,
   selectedRoute,
   onSelectStop,
-  isLoaded,
-  loadError,
 }: MapPlaceholderProps) {
   const mapRef = useRef<google.maps.Map | null>(null);
+
+  const { isLoaded, loadError } = useJsApiLoader({
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
+    libraries,
+  });
 
   const onLoad = useCallback((map: google.maps.Map) => {
     mapRef.current = map;

@@ -38,16 +38,16 @@ const geocodeTool = ai.defineTool(
   async ({ address }) => {
     try {
       const res = await geocoder.geocode(address);
-      if (res.length > 0) {
+      if (res.length > 0 && res[0].latitude && res[0].longitude) {
         return {
           lat: res[0].latitude,
           lng: res[0].longitude,
         };
       }
-      return { lat: 0, lng: 0 }; // Return a default/error value
+      throw new Error(`Could not find coordinates for address: ${address}`);
     } catch (error) {
       console.error('Geocoding error:', error);
-      return { lat: 0, lng: 0 };
+      throw new Error(`Geocoding failed for address: ${address}`);
     }
   }
 );
