@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -35,7 +36,7 @@ export function LoginForm() {
           title: 'Login Successful',
           description: `Welcome, Admin!`,
         });
-        localStorage.setItem('user', JSON.stringify({ fullName: 'Default Admin', role: 'admin' }));
+        localStorage.setItem('user', JSON.stringify({ fullName: 'Default Admin', role: 'admin', identifier: 'admin' }));
         router.push('/');
         return;
       }
@@ -70,7 +71,11 @@ export function LoginForm() {
           description: `Welcome, ${userData.fullName}!`,
         });
         
-        localStorage.setItem('user', JSON.stringify({ fullName: userData.fullName, role: userData.role }));
+        localStorage.setItem('user', JSON.stringify({ 
+            fullName: userData.fullName, 
+            role: userData.role,
+            identifier: valueToQuery 
+        }));
 
         router.push('/');
       } else {

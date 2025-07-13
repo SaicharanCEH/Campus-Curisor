@@ -34,13 +34,19 @@ const SIMULATION_SPEED = 0.0001; // Controls how fast buses move
 
 const libraries: ('places' | 'drawing' | 'geometry' | 'localContext' | 'visualization')[] = ['places'];
 
+interface User {
+  fullName: string;
+  role: string;
+  identifier: string; // Roll number for students, username for admins
+}
+
 export default function HomePage() {
   const [routes, setRoutes] = useState<Route[]>([]);
   const [buses, setBuses] = useState<Bus[]>([]);
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
   const [selectedStop, setSelectedStop] = useState<Stop | null>(null);
   const [favoriteStops, setFavoriteStops] = useState<string[]>([]);
-  const [user, setUser] = useState<{ fullName: string; role: string } | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isAddStudentDialogOpen, setAddStudentDialogOpen] = useState(false);
   const [isAddRouteDialogOpen, setAddRouteDialogOpen] = useState(false);
   const [isAddStopDialogOpen, setAddStopDialogOpen] = useState(false);
@@ -93,7 +99,9 @@ export default function HomePage() {
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      const parsedUser: User = JSON.parse(storedUser);
+      setUser(parsedUser);
+      
       fetchRoutes().then(routesData => {
         initializeBuses(routesData);
         setIsLoading(false);
