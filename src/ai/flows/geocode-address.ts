@@ -7,10 +7,10 @@
  * - GeocodeAddressInput - The input type for the geocodeAddress function.
  * - GeocodeAddressOutput - The return type for the geocodeAddress function.
  */
-import fetch from 'node-fetch';// Conditionally polyfill fetch if it's not available
-if (typeof globalThis.fetch === 'undefined') {
-  globalThis.fetch = fetch as any;
-}
+import fetch from 'node-fetch';
+    if (typeof globalThis.fetch === 'undefined') {
+      globalThis.fetch = fetch;
+    }
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
@@ -30,8 +30,14 @@ export type GeocodeAddressOutput = z.infer<typeof GeocodeAddressOutputSchema>;
 // Configure the geocoder. Using a provider like OpenStreetMap doesn't require an API key.
 // In a production app, you might want to use Google Maps Platform or another provider with an API key.
 const geocoder = NodeGeocoder({
-  provider: 'openstreetmap',
-});
+  provider: 'openstreetmap',fetch,
+  fetch,
+  // Adding referrer for Nominatim usage policy compliance.
+  // Replace "YOUR_APP_URL" with the actual URL of your application.
+  providerFor: {
+    openstreetmap: { referrer: 'YOUR_APP_URL' }
+  }
+ });
 
 const geocodeTool = ai.defineTool(
   {

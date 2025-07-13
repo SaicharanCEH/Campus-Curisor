@@ -20,8 +20,8 @@ const containerStyle = {
 
 // Center of your campus
 const defaultCenter = {
-  lat: 17.5383, 
-  lng: 78.3888,
+  lat: 17.2286, 
+  lng: 78.6478,
 };
 
 export default function MapPlaceholder({
@@ -57,7 +57,7 @@ export default function MapPlaceholder({
       {/* College Marker */}
       <Marker
         position={defaultCenter}
-        title="Campus"
+        title="CVR College of Engineering"
         icon={{
           url: 'https://maps.google.com/mapfiles/kml/shapes/university.png',
           scaledSize: new window.google.maps.Size(40, 40),
