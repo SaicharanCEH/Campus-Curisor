@@ -10,17 +10,21 @@ export interface Stop {
   position: { lat: number; lng: number };
 }
 
+export type BusCapacity = 'Low' | 'Medium' | 'Full';
+
 export interface Route {
   id: string;
   name: string;
   busNumber: string;
-  driverName: string;
+  driverName:string;
   driverMobile: string;
   stops: Stop[];
+  capacity?: BusCapacity;
 }
 
 export interface Bus {
   id: string;
   routeId: string;
   position: { lat: number; lng: number };
+  capacity?: BusCapacity;
 }

@@ -3,7 +3,7 @@
 
 import { GoogleMap, Marker, Polyline } from '@react-google-maps/api';
 import { useCallback, useEffect, useRef } from 'react';
-import type { Bus as BusType, Route, Stop } from '@/types';
+import type { Bus as BusType, Route, Stop, BusCapacity } from '@/types';
 
 interface MapPlaceholderProps {
   buses: BusType[];
@@ -18,14 +18,13 @@ const containerStyle = {
   height: '100%',
 };
 
-// Center of your campus
 const defaultCenter = {
   lat: 17.1966, 
   lng: 78.5961,
 };
 
 const polylineOptions = {
-    strokeColor: '#3F51B5', // Deep blue, matching primary color
+    strokeColor: '#3F51B5',
     strokeOpacity: 0.8,
     strokeWeight: 4,
     fillColor: '#3F51B5',
@@ -37,6 +36,23 @@ const polylineOptions = {
     radius: 30000,
     zIndex: 1,
 };
+
+const getBusIconUrl = (capacity?: BusCapacity) => {
+    switch (capacity) {
+        case 'Low':
+            // Green Bus Icon
+            return 'https://raw.githubusercontent.com/Concept211/Google-Maps-Markers/master/images/marker_green.png';
+        case 'Medium':
+            // Orange Bus Icon
+            return 'https://raw.githubusercontent.com/Concept211/Google-Maps-Markers/master/images/marker_orange.png';
+        case 'Full':
+            // Red Bus Icon
+            return 'https://raw.githubusercontent.com/Concept211/Google-Maps-Markers/master/images/marker_red.png';
+        default:
+            // Default Black Bus Icon
+            return 'https://raw.githubusercontent.com/Concept211/Google-Maps-Markers/master/images/marker_black.png';
+    }
+}
 
 
 export default function MapPlaceholder({
@@ -53,14 +69,19 @@ export default function MapPlaceholder({
   }, []);
   
   useEffect(() => {
-    if (mapRef.current && selectedRoute && selectedRoute.stops.length > 1) {
+    if (mapRef.current && selectedRoute && selectedRoute.stops.length > 0) {
       const bounds = new window.google.maps.LatLngBounds();
       selectedRoute.stops.forEach(stop => {
         if(stop.position) {
           bounds.extend(new window.google.maps.LatLng(stop.position.lat, stop.position.lng));
         }
       });
+      // Also include the college marker in the bounds
+      bounds.extend(new window.google.maps.LatLng(defaultCenter.lat, defaultCenter.lng));
       mapRef.current.fitBounds(bounds);
+    } else if (mapRef.current) {
+        mapRef.current.setCenter(defaultCenter);
+        mapRef.current.setZoom(15);
     }
   }, [selectedRoute]);
 
@@ -85,7 +106,6 @@ export default function MapPlaceholder({
         zoomControl: true,
       }}
     >
-      {/* College Marker */}
       <Marker
         position={defaultCenter}
         title="CVR College of Engineering"
@@ -96,20 +116,25 @@ export default function MapPlaceholder({
         }}
       />
       
-      {/* Bus Markers */}
       {buses.map((bus) => (
         <Marker
           key={bus.id}
           position={bus.position}
-          title={`Bus ${bus.id}`}
+          title={`Bus ${bus.id} - Capacity: ${bus.capacity || 'N/A'}`}
           icon={{
-            url: 'https://img.icons8.com/ios-filled/50/000000/bus.png',
-            scaledSize: new window.google.maps.Size(40, 40),
+            url: getBusIconUrl(bus.capacity),
+            scaledSize: new window.google.maps.Size(32, 45),
+            labelOrigin: new window.google.maps.Point(16, 18)
+          }}
+          label={{
+              text: 'B',
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: 'bold',
           }}
         />
       ))}
 
-      {/* Stop Markers */}
       {selectedRoute?.stops.map((stop) => (
         stop.position && <Marker
           key={stop.id}
@@ -123,7 +148,6 @@ export default function MapPlaceholder({
         />
       ))}
       
-      {/* Route Polyline */}
       {routePath && routePath.length > 1 && (
         <Polyline
           path={routePath}

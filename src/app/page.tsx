@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import MapPlaceholder from '@/components/map-placeholder';
 import DashboardHeader from '@/components/dashboard-header';
-import type { Bus, Route, Stop } from '@/types';
+import type { Bus, Route, Stop, BusCapacity } from '@/types';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,7 +19,7 @@ import { SignupForm } from '@/components/auth/signup-form';
 import { Bus as BusIcon, PlusCircle, View, MapPin } from 'lucide-react';
 import { UserTable } from '@/components/user-table';
 import { AddRouteForm } from '@/components/add-route-form';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import CruiserSidebar from '@/components/cruiser-sidebar';
 import { useJsApiLoader } from '@react-google-maps/api';
@@ -59,19 +59,17 @@ export default function HomePage() {
     const routeSnapshot = await getDocs(routesCollection);
     const routesList = routeSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Route));
     
-    // Preserve selected route if it still exists
-    const currentSelectedRouteId = selectedRoute?.id;
-    const newSelectedRoute = routesList.find(r => r.id === currentSelectedRouteId) || null;
-    
     setRoutes(routesList);
 
-    if (newSelectedRoute) {
-        setSelectedRoute(newSelectedRoute);
+    const currentSelectedRouteId = selectedRoute?.id;
+    if (currentSelectedRouteId) {
+      const newSelectedRoute = routesList.find(r => r.id === currentSelectedRouteId) || null;
+      setSelectedRoute(newSelectedRoute);
     } else if (routesList.length > 0) {
-        setSelectedRoute(routesList[0]);
+      setSelectedRoute(routesList[0]);
     } else {
-        setSelectedRoute(null);
-        setSelectedStop(null);
+      setSelectedRoute(null);
+      setSelectedStop(null);
     }
   };
 
@@ -98,7 +96,7 @@ export default function HomePage() {
   
   const handleRouteSelect = (route: Route | null) => {
     setSelectedRoute(route);
-    setSelectedStop(null); // Reset stop when route changes
+    setSelectedStop(null);
   };
 
   const handleToggleFavorite = (stopId: string) => {
@@ -141,6 +139,25 @@ export default function HomePage() {
     }
   };
 
+  const handleCapacityChange = async (routeId: string, capacity: BusCapacity) => {
+    const routeRef = doc(db, 'routes', routeId);
+    try {
+      await updateDoc(routeRef, { capacity });
+      setRoutes(prevRoutes => prevRoutes.map(r => r.id === routeId ? { ...r, capacity } : r));
+      if (selectedRoute?.id === routeId) {
+        setSelectedRoute(prev => prev ? { ...prev, capacity } : null);
+      }
+      toast({ title: "Capacity Updated", description: `Route capacity set to ${capacity}.`});
+    } catch (error) {
+      console.error("Error updating capacity:", error);
+      toast({ variant: 'destructive', title: 'Error', description: "Failed to update bus capacity." });
+    }
+  };
+  
+  const activeBuses = DUMMY_BUSES
+    .filter(bus => bus.routeId === selectedRoute?.id)
+    .map(bus => ({ ...bus, capacity: selectedRoute?.capacity }));
+
 
   if (isLoading) {
     return (
@@ -174,6 +191,8 @@ export default function HomePage() {
                     onToggleFavorite={handleToggleFavorite}
                     onDeleteRoute={handleDeleteRoute}
                     onDeleteStop={handleDeleteStop}
+                    onCapacityChange={handleCapacityChange}
+                    userRole={user?.role}
                 />
             </aside>
             <main className="flex-1 flex flex-col items-center justify-start p-4 gap-4">
@@ -258,7 +277,7 @@ export default function HomePage() {
                 )}
                 <div className="w-full h-full">
                     <MapPlaceholder
-                        buses={DUMMY_BUSES.filter(bus => bus.routeId === selectedRoute?.id)}
+                        buses={activeBuses}
                         selectedRoute={selectedRoute}
                         onSelectStop={handleStopSelect}
                         isLoaded={isLoaded}

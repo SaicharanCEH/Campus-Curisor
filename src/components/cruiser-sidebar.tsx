@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Bus, Clock, Heart, Map, Star, Pin, Trash2 } from 'lucide-react';
-import type { Route, Stop } from '@/types';
+import type { Route, Stop, BusCapacity } from '@/types';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,8 +22,13 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 
 interface CruiserSidebarProps {
@@ -36,6 +41,8 @@ interface CruiserSidebarProps {
   onToggleFavorite: (stopId: string) => void;
   onDeleteRoute: (routeId: string) => Promise<void>;
   onDeleteStop: (routeId: string, stopId: string) => Promise<void>;
+  onCapacityChange: (routeId: string, capacity: BusCapacity) => void;
+  userRole?: string;
 }
 
 export default function CruiserSidebar({
@@ -48,6 +55,8 @@ export default function CruiserSidebar({
   onToggleFavorite,
   onDeleteRoute,
   onDeleteStop,
+  onCapacityChange,
+  userRole,
 }: CruiserSidebarProps) {
   const allStops = routes.flatMap(route => route.stops);
   const favoritedStopDetails = allStops.filter(stop => favoriteStops.includes(stop.id));
@@ -65,6 +74,17 @@ export default function CruiserSidebar({
     setIsDeleting(false);
   }
 
+  const capacityOptions: BusCapacity[] = ['Low', 'Medium', 'Full'];
+
+  const getCapacityColor = (capacity?: BusCapacity) => {
+    switch (capacity) {
+      case 'Low': return 'bg-green-500';
+      case 'Medium': return 'bg-yellow-500';
+      case 'Full': return 'bg-red-500';
+      default: return 'bg-gray-400';
+    }
+  }
+
 
   return (
     <div className="flex flex-col h-full bg-card text-card-foreground">
@@ -78,50 +98,73 @@ export default function CruiserSidebar({
         </TabsList>
 
         <TabsContent value="routes" className="flex-1 overflow-y-auto px-4">
-          <Accordion type="single" collapsible defaultValue={selectedRoute?.id}>
+          <Accordion type="single" collapsible defaultValue={selectedRoute?.id} value={selectedRoute?.id || ''} onValueChange={(value) => onSelectRoute(routes.find(r => r.id === value) || null)}>
             {routes.map((route) => (
               <AccordionItem value={route.id} key={route.id}>
-                <div className="group flex items-center justify-between w-full hover:underline">
+                 <div className="group flex items-center justify-between w-full hover:bg-muted/50 rounded-md">
                     <AccordionTrigger
-                    onClick={() => onSelectRoute(route)}
-                    className="flex-1 py-4 font-medium text-left"
+                      onClick={() => onSelectRoute(route)}
+                      className="flex-1 py-3 px-4 font-medium text-left hover:no-underline"
                     >
-                    <span className="flex items-center">
-                        <Bus className="h-4 w-4 mr-2" />
-                        {route.name}
-                    </span>
+                      <div className="flex items-center gap-3">
+                          <Bus className="h-4 w-4" />
+                          <span>{route.name}</span>
+                           <span className={`w-3 h-3 rounded-full ${getCapacityColor(route.capacity)}`} title={`Capacity: ${route.capacity || 'Not set'}`}></span>
+                      </div>
                     </AccordionTrigger>
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity delete-route-btn"
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Route: {route.name}?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete the route and all its stops.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction 
-                                    onClick={() => handleDeleteRouteClick(route.id)}
-                                    disabled={isDeleting}
-                                    className="bg-destructive hover:bg-destructive/90"
-                                >
-                                    {isDeleting ? 'Deleting...' : 'Delete Route'}
-                                </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
+                    
+                    <div className='flex items-center pr-2'>
+                        {userRole === 'admin' && (
+                           <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8">Capacity</Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              {capacityOptions.map(cap => (
+                                <DropdownMenuItem key={cap} onSelect={() => onCapacityChange(route.id, cap)}>
+                                  <span className={`w-2 h-2 rounded-full mr-2 ${getCapacityColor(cap)}`}></span>
+                                  {cap}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+
+                        {userRole === 'admin' && (
+                          <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                  <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={(e) => e.stopPropagation()}
+                                  >
+                                      <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                      <AlertDialogTitle>Delete Route: {route.name}?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                          This action cannot be undone. This will permanently delete the route and all its stops.
+                                      </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction 
+                                          onClick={() => handleDeleteRouteClick(route.id)}
+                                          disabled={isDeleting}
+                                          className="bg-destructive hover:bg-destructive/90"
+                                      >
+                                          {isDeleting ? 'Deleting...' : 'Delete Route'}
+                                      </AlertDialogAction>
+                                  </AlertDialogFooter>
+                              </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                    </div>
                 </div>
+
                 <AccordionContent>
                   <ul className="space-y-1">
                     {route.stops.map((stop) => (
@@ -137,36 +180,38 @@ export default function CruiserSidebar({
                           </div>
                         </Button>
                         <div className="absolute right-1 flex items-center">
-                           <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 opacity-0 group-hover/item:opacity-100 transition-opacity delete-stop-btn"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>Delete stop for {stop.studentName}?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      This will remove the stop at {stop.location}. This action cannot be undone.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction 
-                                      onClick={() => handleDeleteStopClick(route.id, stop.id)}
-                                      disabled={isDeleting}
-                                      className="bg-destructive hover:bg-destructive/90"
-                                    >
-                                      {isDeleting ? 'Deleting...' : 'Delete Stop'}
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                           {userRole === 'admin' && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 opacity-0 group-hover/item:opacity-100 transition-opacity delete-stop-btn"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                      <AlertDialogTitle>Delete stop for {stop.studentName}?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This will remove the stop at {stop.location}. This action cannot be undone.
+                                      </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction 
+                                        onClick={() => handleDeleteStopClick(route.id, stop.id)}
+                                        disabled={isDeleting}
+                                        className="bg-destructive hover:bg-destructive/90"
+                                      >
+                                        {isDeleting ? 'Deleting...' : 'Delete Stop'}
+                                      </AlertDialogAction>
+                                  </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                           )}
                           <div
                             role="button"
                             tabIndex={0}
