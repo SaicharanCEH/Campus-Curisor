@@ -71,10 +71,12 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
     try {
       const generatedPassword = Math.random().toString(36).slice(-8);
       
+      const fullPhoneNumber = phoneNumber ? `+91${phoneNumber}` : '';
+
       const userData: { [key: string]: any } = {
         fullName,
         email,
-        phoneNumber,
+        phoneNumber: fullPhoneNumber,
         password: generatedPassword, 
         role,
       };
@@ -98,7 +100,7 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
       const emailResult = await sendWelcomeEmail({
         fullName,
         email,
-        phoneNumber,
+        phoneNumber: fullPhoneNumber,
         identifier: role === 'student' ? identifier.toUpperCase() : identifier,
         password: generatedPassword,
         role,
@@ -199,7 +201,7 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
             <Input
               id="phone-number"
               type="tel"
-              placeholder="+91"
+              placeholder="e.g., 9876543210"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
             />
