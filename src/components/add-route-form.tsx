@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { X, PlusCircle } from 'lucide-react';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { ScrollArea } from './ui/scroll-area';
 import { geocodeAddress } from '@/ai/flows/geocode-address';
@@ -72,6 +72,25 @@ export function AddRouteForm({ onRouteCreated, isGoogleMapsLoaded }: AddRouteFor
   const onSubmit = async (data: AddRouteFormValues) => {
     setIsSubmitting(true);
     try {
+      // Validate that all student roll numbers exist in the database
+      const usersRef = collection(db, 'users');
+      await Promise.all(
+        data.stops.map(async (stop) => {
+          if (!stop.rollNumber) {
+            throw new Error(`Roll number is missing for student: ${stop.studentName}.`);
+          }
+          const q = query(
+            usersRef, 
+            where('rollNumber', '==', stop.rollNumber.toUpperCase()),
+            where('role', '==', 'student')
+          );
+          const querySnapshot = await getDocs(q);
+          if (querySnapshot.empty) {
+            throw new Error(`Student with roll number "${stop.rollNumber.toUpperCase()}" does not exist.`);
+          }
+        })
+      );
+      
       const stopsWithPositions = await Promise.all(
         data.stops.map(async (stop) => {
           if (!stop.location) {
@@ -84,7 +103,7 @@ export function AddRouteForm({ onRouteCreated, isGoogleMapsLoaded }: AddRouteFor
           return {
             id: `${data.name.replace(/\s+/g, '-').toLowerCase()}-${stop.studentName.replace(/\s+/g, '-').toLowerCase()}-${Math.random().toString(36).substr(2, 5)}`,
             studentName: stop.studentName,
-            rollNumber: stop.rollNumber,
+            rollNumber: stop.rollNumber.toUpperCase(),
             location: stop.location,
             landmark: stop.landmark,
             time: stop.time,
@@ -182,7 +201,7 @@ export function AddRouteForm({ onRouteCreated, isGoogleMapsLoaded }: AddRouteFor
                   <Input
                     id={`stops.${index}.studentName`}
                     placeholder="e.g., Jane Doe"
-                    {...register(`stops.${index}.studentName` as const, { required: true })}
+                    {...register(`stops.${index}.studentName` as const, { required: 'Student name is required' })}
                   />
                 </div>
                 <div className="col-span-12 sm:col-span-6">
@@ -190,7 +209,7 @@ export function AddRouteForm({ onRouteCreated, isGoogleMapsLoaded }: AddRouteFor
                   <Input
                     id={`stops.${index}.rollNumber`}
                     placeholder="e.g., 21B81A0501"
-                    {...register(`stops.${index}.rollNumber` as const, { required: true })}
+                    {...register(`stops.${index}.rollNumber` as const, { required: 'Roll number is required' })}
                   />
                 </div>
                 <div className="col-span-12">
@@ -199,7 +218,7 @@ export function AddRouteForm({ onRouteCreated, isGoogleMapsLoaded }: AddRouteFor
                      <Controller
                         name={`stops.${index}.location`}
                         control={control}
-                        rules={{ required: true }}
+                        rules={{ required: 'Location is required' }}
                         render={({ field }) => (
                            <Autocomplete
                             onLoad={(autocomplete) => onAutocompleteLoad(autocomplete, index)}
@@ -217,7 +236,7 @@ export function AddRouteForm({ onRouteCreated, isGoogleMapsLoaded }: AddRouteFor
                      <Input
                       id={`stops.${index}.location`}
                       placeholder="e.g., Main Gate, VNRVJIET"
-                      {...register(`stops.${index}.location` as const, { required: true })}
+                      {...register(`stops.${index}.location` as const, { required: 'Location is required' })}
                     />
                   )}
                 </div>
@@ -234,7 +253,7 @@ export function AddRouteForm({ onRouteCreated, isGoogleMapsLoaded }: AddRouteFor
                   <Input
                     id={`stops.${index}.time`}
                     type="time"
-                    {...register(`stops.${index}.time` as const, { required: true })}
+                    {...register(`stops.${index}.time` as const, { required: 'Time is required' })}
                   />
                 </div>
                 <div className="col-span-3 sm:col-span-2 flex items-end">
