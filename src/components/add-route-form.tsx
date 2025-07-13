@@ -118,7 +118,7 @@ export function AddRouteForm({ onRouteCreated, isLoaded, loadError }: AddRouteFo
     }
   };
   
-  if (loadError) return <div>Error loading maps. Please enable the required APIs in your Google Cloud project.</div>;
+  if (loadError) return <div>Error loading maps. Please check the API key and enabled APIs in your Google Cloud project.</div>;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="grid gap-6">
@@ -202,6 +202,7 @@ export function AddRouteForm({ onRouteCreated, isLoaded, loadError }: AddRouteFo
                                     id={`stops.${index}.location`}
                                     placeholder="e.g., Main Gate, VNRVJIET"
                                     defaultValue={value}
+                                    onChange={onChange}
                                 />
                             </Autocomplete>
                         )}
@@ -211,6 +212,7 @@ export function AddRouteForm({ onRouteCreated, isLoaded, loadError }: AddRouteFo
                       id={`stops.${index}.location`}
                       placeholder="e.g., Main Gate, VNRVJIET"
                       {...register(`stops.${index}.location` as const, { required: true })}
+                      disabled
                     />
                   )}
                 </div>

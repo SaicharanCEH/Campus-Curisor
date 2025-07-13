@@ -38,7 +38,7 @@ export default function MapPlaceholder({
   }, []);
 
   if (loadError) {
-    return <p>Error loading map</p>
+    return <p>Error loading map. Please check your API key.</p>
   }
 
   if (!isLoaded) return <p>Loading Map...</p>;
