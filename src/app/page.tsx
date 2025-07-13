@@ -25,6 +25,9 @@ import CruiserSidebar from '@/components/cruiser-sidebar';
 import { useJsApiLoader } from '@react-google-maps/api';
 import { AddStopForm } from '@/components/add-stop-form';
 import { Skeleton } from '@/components/ui/skeleton';
+import { deleteRoute } from '@/ai/flows/delete-route';
+import { deleteStop } from '@/ai/flows/delete-stop';
+import { useToast } from '@/hooks/use-toast';
 
 const DUMMY_BUSES: Bus[] = [
   { id: 'bus-3', routeId: 'route-2', position: { lat: 17.4025, lng: 78.5025 } },
@@ -44,6 +47,7 @@ export default function HomePage() {
   const [isAddStopDialogOpen, setAddStopDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const { toast } = useToast();
 
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
@@ -54,15 +58,20 @@ export default function HomePage() {
     const routesCollection = collection(db, 'routes');
     const routeSnapshot = await getDocs(routesCollection);
     const routesList = routeSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Route));
+    
+    // Preserve selected route if it still exists
+    const currentSelectedRouteId = selectedRoute?.id;
+    const newSelectedRoute = routesList.find(r => r.id === currentSelectedRouteId) || null;
+    
     setRoutes(routesList);
-    if (routesList.length > 0 && !selectedRoute) {
-        // If there's no selected route, default to the first one
-        const currentSelectedRoute = routes.find(r => r.id === selectedRoute?.id)
-        if (currentSelectedRoute) {
-            setSelectedRoute(currentSelectedRoute);
-        } else {
-            setSelectedRoute(routesList[0]);
-        }
+
+    if (newSelectedRoute) {
+        setSelectedRoute(newSelectedRoute);
+    } else if (routesList.length > 0) {
+        setSelectedRoute(routesList[0]);
+    } else {
+        setSelectedRoute(null);
+        setSelectedStop(null);
     }
   };
 
@@ -112,6 +121,27 @@ export default function HomePage() {
     await fetchRoutes();
   };
 
+  const handleDeleteRoute = async (routeId: string) => {
+    const result = await deleteRoute(routeId);
+    if (result.success) {
+      toast({ title: 'Route Deleted', description: 'The route has been successfully removed.' });
+      await fetchRoutes();
+    } else {
+      toast({ variant: 'destructive', title: 'Error', description: result.message });
+    }
+  };
+
+  const handleDeleteStop = async (routeId: string, stopId: string) => {
+    const result = await deleteStop({ routeId, stopId });
+    if (result.success) {
+      toast({ title: 'Stop Deleted', description: 'The stop has been successfully removed.' });
+      await fetchRoutes();
+    } else {
+      toast({ variant: 'destructive', title: 'Error', description: result.message });
+    }
+  };
+
+
   if (isLoading) {
     return (
       <div className="flex h-screen w-full flex-col">
@@ -142,6 +172,8 @@ export default function HomePage() {
                     onSelectStop={handleStopSelect}
                     favoriteStops={favoriteStops}
                     onToggleFavorite={handleToggleFavorite}
+                    onDeleteRoute={handleDeleteRoute}
+                    onDeleteStop={handleDeleteStop}
                 />
             </aside>
             <main className="flex-1 flex flex-col items-center justify-start p-4 gap-4">
