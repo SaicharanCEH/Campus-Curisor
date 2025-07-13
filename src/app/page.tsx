@@ -58,12 +58,10 @@ export default function HomePage() {
     libraries,
   });
 
-  const fetchRoutes = async () => {
+  const fetchAllRoutes = async () => {
     const routesCollection = collection(db, 'routes');
     const routeSnapshot = await getDocs(routesCollection);
-    const routesList = routeSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Route));
-    setRoutes(routesList);
-    return routesList;
+    return routeSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Route));
   };
 
   const initializeBuses = (routesData: Route[]) => {
@@ -89,15 +87,15 @@ export default function HomePage() {
       const parsedUser: User = JSON.parse(storedUser);
       setUser(parsedUser);
       
-      fetchRoutes().then(routesData => {
-        initializeBuses(routesData);
-
+      fetchAllRoutes().then(allRoutes => {
+        
+        let routesToDisplay = allRoutes;
+        let studentRoute: Route | null = null;
+        let studentStop: Stop | null = null;
+        
         // Student-specific logic
         if (parsedUser.role === 'student' && parsedUser.identifier) {
-          let studentRoute: Route | null = null;
-          let studentStop: Stop | null = null;
-
-          for (const route of routesData) {
+          for (const route of allRoutes) {
             const foundStop = route.stops.find(
               stop => stop.rollNumber.toUpperCase() === parsedUser.identifier.toUpperCase()
             );
@@ -107,17 +105,25 @@ export default function HomePage() {
               break;
             }
           }
+          // If a student's route is found, only display that route
+          if (studentRoute) {
+            routesToDisplay = [studentRoute];
+          } else {
+            // If student is not assigned a route, show nothing.
+            routesToDisplay = [];
+          }
+        }
+        
+        setRoutes(routesToDisplay);
+        initializeBuses(routesToDisplay);
 
-          if (studentRoute && studentStop) {
+        // Auto-select logic
+        if (studentRoute && studentStop) {
             setSelectedRoute(studentRoute);
             setSelectedStop(studentStop);
-          } else if (routesData.length > 0) {
-             // Fallback for students not assigned a stop or for admins
-            setSelectedRoute(routesData[0]);
-          }
-        } else if (routesData.length > 0) {
-          // Default behavior for admins or if no user role logic applies
-          setSelectedRoute(routesData[0]);
+        } else if (routesToDisplay.length > 0) {
+            // Fallback for admins or if no specific student stop was found
+            setSelectedRoute(routesToDisplay[0]);
         }
         
         setIsLoading(false);
@@ -155,19 +161,22 @@ export default function HomePage() {
 
   const onRouteCreated = async () => {
     setAddRouteDialogOpen(false);
-    await fetchRoutes();
+    const allRoutes = await fetchAllRoutes();
+    setRoutes(allRoutes);
   };
 
   const onStopAdded = async () => {
     setAddStopDialogOpen(false);
-    await fetchRoutes();
+    const allRoutes = await fetchAllRoutes();
+    setRoutes(allRoutes);
   };
 
   const handleDeleteRoute = async (routeId: string) => {
     const result = await deleteRoute(routeId);
     if (result.success) {
       toast({ title: 'Route Deleted', description: 'The route has been successfully removed.' });
-      await fetchRoutes();
+      const allRoutes = await fetchAllRoutes();
+      setRoutes(allRoutes);
     } else {
       toast({ variant: 'destructive', title: 'Error', description: result.message });
     }
@@ -177,7 +186,8 @@ export default function HomePage() {
     const result = await deleteStop({ routeId, stopId });
     if (result.success) {
       toast({ title: 'Stop Deleted', description: 'The stop has been successfully removed.' });
-      await fetchRoutes();
+      const allRoutes = await fetchAllRoutes();
+      setRoutes(allRoutes);
     } else {
       toast({ variant: 'destructive', title: 'Error', description: result.message });
     }
