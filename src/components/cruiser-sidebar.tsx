@@ -81,50 +81,47 @@ export default function CruiserSidebar({
           <Accordion type="single" collapsible defaultValue={selectedRoute?.id}>
             {routes.map((route) => (
               <AccordionItem value={route.id} key={route.id}>
-                <AccordionTrigger
-                  onClick={(e) => {
-                    // Prevent accordion from toggling if delete is clicked
-                    if (!(e.target as HTMLElement).closest('.delete-route-btn')) {
-                      onSelectRoute(route);
-                    }
-                  }}
-                  className="relative group"
-                >
-                  <span className="flex items-center">
-                    <Bus className="h-4 w-4 mr-2" />
-                    {route.name}
-                  </span>
-                   <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-8 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity delete-route-btn"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                          <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Route: {route.name}?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                  This action cannot be undone. This will permanently delete the route and all its stops.
-                              </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction 
-                                onClick={() => handleDeleteRouteClick(route.id)}
-                                disabled={isDeleting}
-                                className="bg-destructive hover:bg-destructive/90"
-                              >
-                                {isDeleting ? 'Deleting...' : 'Delete Route'}
-                              </AlertDialogAction>
-                          </AlertDialogFooter>
-                      </AlertDialogContent>
-                  </AlertDialog>
-                </AccordionTrigger>
+                <div className="group flex items-center justify-between w-full hover:underline">
+                    <AccordionTrigger
+                    onClick={() => onSelectRoute(route)}
+                    className="flex-1 py-4 font-medium text-left"
+                    >
+                    <span className="flex items-center">
+                        <Bus className="h-4 w-4 mr-2" />
+                        {route.name}
+                    </span>
+                    </AccordionTrigger>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity delete-route-btn"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Route: {route.name}?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete the route and all its stops.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction 
+                                    onClick={() => handleDeleteRouteClick(route.id)}
+                                    disabled={isDeleting}
+                                    className="bg-destructive hover:bg-destructive/90"
+                                >
+                                    {isDeleting ? 'Deleting...' : 'Delete Route'}
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </div>
                 <AccordionContent>
                   <ul className="space-y-1">
                     {route.stops.map((stop) => (
