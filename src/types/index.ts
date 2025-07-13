@@ -5,7 +5,7 @@ export interface Stop {
   location: string;
   time: string;
   eta?: string;
-  position: { lat: number; lng: number };
+  position?: { lat: number; lng: number };
 }
 
 export interface Route {
