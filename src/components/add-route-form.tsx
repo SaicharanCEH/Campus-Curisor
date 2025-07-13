@@ -30,21 +30,13 @@ interface AddRouteFormValues {
 
 interface AddRouteFormProps {
   onRouteCreated?: () => void;
+  isLoaded: boolean;
 }
 
-// Define libraries for Google Maps API
-const libraries: ('places' | 'drawing' | 'geometry' | 'localContext' | 'visualization')[] = ['places'];
-
-
-export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
+export function AddRouteForm({ onRouteCreated, isLoaded }: AddRouteFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [autocompleteInstances, setAutocompleteInstances] = useState<(google.maps.places.Autocomplete | null)[]>([]);
-
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
-    libraries,
-  });
 
   const { register, control, handleSubmit, reset, setValue, formState: { errors } } = useForm<AddRouteFormValues>({
     defaultValues: {
@@ -146,7 +138,7 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
   };
 
   if (!isLoaded) {
-    return <div>Loading...</div>;
+    return <div>Loading Map Utilities...</div>;
   }
 
   return (
