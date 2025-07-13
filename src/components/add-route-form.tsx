@@ -1,18 +1,19 @@
 
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useFieldArray, useForm, Controller } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { X, PlusCircle } from 'lucide-react';
-import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { ScrollArea } from './ui/scroll-area';
 import { geocodeAddress } from '@/ai/flows/geocode-address';
 import { Autocomplete } from '@react-google-maps/api';
+import { Combobox } from './ui/combobox';
 
 interface StopFormValues {
   rollNumber: string;
@@ -38,9 +39,10 @@ interface AddRouteFormProps {
 export function AddRouteForm({ onRouteCreated, isGoogleMapsLoaded }: AddRouteFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const autocompleteRefs = useRef<google.maps.places.Autocomplete[]>([]);
+  const [students, setStudents] = useState<{ value: string; label: string; fullName: string }[]>([]);
+  const autocompleteRefs = useRef<(google.maps.places.Autocomplete | null)[]>([]);
 
-  const { register, control, handleSubmit, reset, formState: { errors }, setValue } = useForm<AddRouteFormValues>({
+  const { register, control, handleSubmit, reset, formState: { errors }, setValue, watch } = useForm<AddRouteFormValues>({
     defaultValues: {
       name: '',
       busNumber: '',
@@ -54,8 +56,35 @@ export function AddRouteForm({ onRouteCreated, isGoogleMapsLoaded }: AddRouteFor
     control,
     name: 'stops',
   });
+  
+  useEffect(() => {
+    const fetchStudents = async () => {
+        try {
+            const usersRef = collection(db, 'users');
+            const q = query(usersRef, where('role', '==', 'student'));
+            const querySnapshot = await getDocs(q);
+            const studentList = querySnapshot.docs.map(doc => {
+                const data = doc.data();
+                return { 
+                    value: data.rollNumber.toLowerCase(), // for combobox matching
+                    label: data.rollNumber, // for display
+                    fullName: data.fullName
+                };
+            });
+            setStudents(studentList);
+        } catch (error) {
+            console.error("Error fetching students: ", error);
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Failed to load student list.',
+            });
+        }
+    };
+    fetchStudents();
+  }, [toast]);
 
-  const onAutocompleteLoad = (autocomplete: google.maps.places.Autocomplete, index: number) => {
+  const onAutocompleteLoad = (autocomplete: google.maps.places.Autocomplete | null, index: number) => {
     autocompleteRefs.current[index] = autocomplete;
   };
 
@@ -72,24 +101,12 @@ export function AddRouteForm({ onRouteCreated, isGoogleMapsLoaded }: AddRouteFor
   const onSubmit = async (data: AddRouteFormValues) => {
     setIsSubmitting(true);
     try {
-      // Validate that all student roll numbers exist in the database
-      const usersRef = collection(db, 'users');
-      await Promise.all(
-        data.stops.map(async (stop) => {
+      // Validation to ensure a student is selected for each stop
+       for (const stop of data.stops) {
           if (!stop.rollNumber) {
-            throw new Error(`Roll number is missing for student: ${stop.studentName}.`);
+            throw new Error(`A student must be selected for each stop.`);
           }
-          const q = query(
-            usersRef, 
-            where('rollNumber', '==', stop.rollNumber.toUpperCase()),
-            where('role', '==', 'student')
-          );
-          const querySnapshot = await getDocs(q);
-          if (querySnapshot.empty) {
-            throw new Error(`Student with roll number "${stop.rollNumber.toUpperCase()}" does not exist.`);
-          }
-        })
-      );
+        }
       
       const stopsWithPositions = await Promise.all(
         data.stops.map(async (stop) => {
@@ -192,24 +209,39 @@ export function AddRouteForm({ onRouteCreated, isGoogleMapsLoaded }: AddRouteFor
       
       <div className="grid gap-4">
         <Label>Stops</Label>
-        <ScrollArea className="h-48 pr-4">
+        <ScrollArea className="h-60 pr-4">
           <div className="space-y-4">
             {fields.map((field, index) => (
               <div key={field.id} className="grid grid-cols-12 gap-x-2 gap-y-4 p-3 border rounded-md relative">
+                 <div className="col-span-12 sm:col-span-6">
+                   <Label htmlFor={`stops.${index}.rollNumber`} className="text-xs">Roll Number</Label>
+                   <Controller
+                        name={`stops.${index}.rollNumber`}
+                        control={control}
+                        rules={{ required: 'Roll number is required' }}
+                        render={({ field }) => (
+                           <Combobox
+                                options={students}
+                                placeholder="Select student..."
+                                notFoundText="No student found."
+                                value={field.value}
+                                onChange={(value) => {
+                                    const selectedStudent = students.find(s => s.value === value);
+                                    field.onChange(selectedStudent ? selectedStudent.label : '');
+                                    setValue(`stops.${index}.studentName`, selectedStudent ? selectedStudent.fullName : '');
+                                }}
+                            />
+                        )}
+                    />
+                </div>
                 <div className="col-span-12 sm:col-span-6">
                   <Label htmlFor={`stops.${index}.studentName`} className="text-xs">Student Name</Label>
                   <Input
                     id={`stops.${index}.studentName`}
                     placeholder="e.g., Jane Doe"
                     {...register(`stops.${index}.studentName` as const, { required: 'Student name is required' })}
-                  />
-                </div>
-                <div className="col-span-12 sm:col-span-6">
-                  <Label htmlFor={`stops.${index}.rollNumber`} className="text-xs">Roll Number</Label>
-                  <Input
-                    id={`stops.${index}.rollNumber`}
-                    placeholder="e.g., 21B81A0501"
-                    {...register(`stops.${index}.rollNumber` as const, { required: 'Roll number is required' })}
+                    readOnly
+                    className="bg-muted"
                   />
                 </div>
                 <div className="col-span-12">
@@ -219,15 +251,16 @@ export function AddRouteForm({ onRouteCreated, isGoogleMapsLoaded }: AddRouteFor
                         name={`stops.${index}.location`}
                         control={control}
                         rules={{ required: 'Location is required' }}
-                        render={({ field }) => (
+                        render={({ field: { onChange, value } }) => (
                            <Autocomplete
                             onLoad={(autocomplete) => onAutocompleteLoad(autocomplete, index)}
                             onPlaceChanged={() => onPlaceChanged(index)}
                           >
                             <Input
-                              {...field}
                               id={`stops.${index}.location`}
                               placeholder="e.g., Main Gate, VNRVJIET"
+                              onChange={onChange}
+                              value={value}
                             />
                            </Autocomplete>
                         )}
