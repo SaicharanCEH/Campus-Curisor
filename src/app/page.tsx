@@ -16,13 +16,14 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { SignupForm } from '@/components/auth/signup-form';
-import { Bus as BusIcon, PlusCircle, View } from 'lucide-react';
+import { Bus as BusIcon, PlusCircle, View, MapPin } from 'lucide-react';
 import { UserTable } from '@/components/user-table';
 import { AddRouteForm } from '@/components/add-route-form';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import CruiserSidebar from '@/components/cruiser-sidebar';
 import { useJsApiLoader } from '@react-google-maps/api';
+import { AddStopForm } from '@/components/add-stop-form';
 
 const DUMMY_BUSES: Bus[] = [
   { id: 'bus-3', routeId: 'route-2', position: { lat: 17.4025, lng: 78.5025 } },
@@ -39,6 +40,7 @@ export default function HomePage() {
   const [user, setUser] = useState<{ fullName: string; role: string } | null>(null);
   const [isAddStudentDialogOpen, setAddStudentDialogOpen] = useState(false);
   const [isAddRouteDialogOpen, setAddRouteDialogOpen] = useState(false);
+  const [isAddStopDialogOpen, setAddStopDialogOpen] = useState(false);
   const router = useRouter();
 
   const { isLoaded, loadError } = useJsApiLoader({
@@ -46,21 +48,28 @@ export default function HomePage() {
     libraries,
   });
 
+  const fetchRoutes = async () => {
+    const routesCollection = collection(db, 'routes');
+    const routeSnapshot = await getDocs(routesCollection);
+    const routesList = routeSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Route));
+    setRoutes(routesList);
+    if (routesList.length > 0 && !selectedRoute) {
+        // If there's no selected route, default to the first one
+        const currentSelectedRoute = routes.find(r => r.id === selectedRoute?.id)
+        if (currentSelectedRoute) {
+            setSelectedRoute(currentSelectedRoute);
+        } else {
+            setSelectedRoute(routesList[0]);
+        }
+    }
+  };
+
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
     
-    const fetchRoutes = async () => {
-      const routesCollection = collection(db, 'routes');
-      const routeSnapshot = await getDocs(routesCollection);
-      const routesList = routeSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Route));
-      setRoutes(routesList);
-      if (routesList.length > 0) {
-        setSelectedRoute(routesList[0]);
-      }
-    };
     fetchRoutes();
   }, []);
   
@@ -91,11 +100,12 @@ export default function HomePage() {
 
   const onRouteCreated = async () => {
     setAddRouteDialogOpen(false);
-    // Refetch routes
-    const routesCollection = collection(db, 'routes');
-    const routeSnapshot = await getDocs(routesCollection);
-    const routesList = routeSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Route));
-    setRoutes(routesList);
+    await fetchRoutes();
+  };
+
+  const onStopAdded = async () => {
+    setAddStopDialogOpen(false);
+    await fetchRoutes();
   };
 
   return (
@@ -133,6 +143,7 @@ export default function HomePage() {
                             <SignupForm onUserCreated={onUserCreated} />
                         </DialogContent>
                         </Dialog>
+
                         <Dialog open={isAddRouteDialogOpen} onOpenChange={setAddRouteDialogOpen}>
                         <DialogTrigger asChild>
                             <Button>
@@ -140,16 +151,39 @@ export default function HomePage() {
                             Add Route
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-2xl">
+                        <DialogContent className="sm:max-w-md">
                             <DialogHeader>
                             <DialogTitle>Add a New Bus Route</DialogTitle>
                             <DialogDescription>
-                                Define a new route with its name and stops.
+                                Define a new route with its name and driver details. Stops can be added later.
                             </DialogDescription>
                             </DialogHeader>
-                            <AddRouteForm onRouteCreated={onRouteCreated} isGoogleMapsLoaded={isLoaded} />
+                            <AddRouteForm onRouteCreated={onRouteCreated} />
                         </DialogContent>
                         </Dialog>
+
+                        <Dialog open={isAddStopDialogOpen} onOpenChange={setAddStopDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button>
+                            <MapPin className="mr-2 h-4 w-4" />
+                             Add Stop
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                            <DialogTitle>Add a New Stop to a Route</DialogTitle>
+                            <DialogDescription>
+                                Select a route and assign a student stop with location and time.
+                            </DialogDescription>
+                            </DialogHeader>
+                            <AddStopForm 
+                                onStopAdded={onStopAdded} 
+                                isGoogleMapsLoaded={isLoaded}
+                                routes={routes}
+                            />
+                        </DialogContent>
+                        </Dialog>
+
                         <Dialog>
                         <DialogTrigger asChild>
                             <Button variant="outline">
@@ -183,3 +217,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+    
