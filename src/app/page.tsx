@@ -30,7 +30,6 @@ import { deleteStop } from '@/ai/flows/delete-stop';
 import { useToast } from '@/hooks/use-toast';
 
 const DUMMY_BUS_IDS = ['bus-1', 'bus-2', 'bus-3', 'bus-4'];
-const SIMULATION_SPEED = 0.0001; // Controls how fast buses move
 
 const libraries: ('places' | 'drawing' | 'geometry' | 'localContext' | 'visualization')[] = ['places'];
 
@@ -127,49 +126,6 @@ export default function HomePage() {
       router.push('/login');
     }
   }, [router]);
-  
-  useEffect(() => {
-    if (!routes.length || !buses.length) return;
-
-    const interval = setInterval(() => {
-      setBuses(currentBuses =>
-        currentBuses.map(bus => {
-          const route = routes.find(r => r.id === bus.routeId);
-          if (!route || route.stops.length === 0) {
-            return bus; // Keep bus stationary if route is invalid
-          }
-
-          const currentStop = route.stops[bus.currentStopIndex];
-          const nextStopIndex = (bus.currentStopIndex + 1) % route.stops.length;
-          const nextStop = route.stops[nextStopIndex];
-
-          const dx = nextStop.position.lng - currentStop.position.lng;
-          const dy = nextStop.position.lat - currentStop.position.lat;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
-          // If the bus is very close to the next stop, snap to it and update target
-          if (distance < SIMULATION_SPEED) {
-            return {
-              ...bus,
-              position: nextStop.position,
-              currentStopIndex: nextStopIndex,
-            };
-          }
-
-          // Otherwise, move towards the next stop
-          const newLat = bus.position.lat + (dy / distance) * SIMULATION_SPEED;
-          const newLng = bus.position.lng + (dx / distance) * SIMULATION_SPEED;
-
-          return {
-            ...bus,
-            position: { lat: newLat, lng: newLng },
-          };
-        })
-      );
-    }, 1000); // Update every second
-
-    return () => clearInterval(interval);
-  }, [buses, routes]);
 
 
   const handleLogout = () => {
