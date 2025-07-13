@@ -58,6 +58,11 @@ const geocodeTool = ai.defineTool(
       console.error('Geocoding error:', error);
       // This catches errors from the geocoding service itself (e.g., network issues, timeouts).
       const message = error instanceof Error ? error.message : String(error);
+      // We check if the message is our specific "No coordinates found" message. If so, we re-throw it as is.
+      // Otherwise, we wrap it in a more generic error. This prevents double-wrapping our specific error.
+      if (message.startsWith('No coordinates found')) {
+        throw error;
+      }
       throw new Error(`Geocoding service failed for address: "${address}". Reason: ${message}`);
     }
   }
