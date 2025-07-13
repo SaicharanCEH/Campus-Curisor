@@ -47,6 +47,17 @@ export function AddStopForm({ onStopAdded, isGoogleMapsLoaded, routes }: AddStop
     return routes.map(route => ({ value: route.id, label: `${route.busNumber} (${route.name})` }))
   }, [routes]);
 
+  const assignedRollNumbers = useMemo(() => {
+    const rollNumbers = new Set<string>();
+    routes.forEach(route => {
+        route.stops.forEach(stop => {
+            rollNumbers.add(stop.rollNumber.toUpperCase());
+        });
+    });
+    return rollNumbers;
+  }, [routes]);
+
+
   const { register, control, handleSubmit, reset, formState: { errors }, setValue, watch } = useForm<AddStopFormValues>({
     defaultValues: {
       routeId: '',
@@ -64,14 +75,17 @@ export function AddStopForm({ onStopAdded, isGoogleMapsLoaded, routes }: AddStop
             const usersRef = collection(db, 'users');
             const q = query(usersRef, where('role', '==', 'student'));
             const querySnapshot = await getDocs(q);
-            const studentList = querySnapshot.docs.map(doc => {
-                const data = doc.data();
-                return { 
-                    value: data.rollNumber.toLowerCase(), // for combobox matching and storing
-                    label: data.rollNumber, // for display
-                    fullName: data.fullName
-                };
-            });
+            const studentList = querySnapshot.docs
+              .map(doc => {
+                  const data = doc.data();
+                  return { 
+                      value: data.rollNumber.toLowerCase(), // for combobox matching and storing
+                      label: data.rollNumber, // for display
+                      fullName: data.fullName
+                  };
+              })
+              .filter(student => !assignedRollNumbers.has(student.label.toUpperCase())); // Filter out assigned students
+            
             setStudents(studentList);
         } catch (error) {
             console.error("Error fetching students: ", error);
@@ -83,7 +97,7 @@ export function AddStopForm({ onStopAdded, isGoogleMapsLoaded, routes }: AddStop
         }
     };
     fetchStudents();
-  }, [toast]);
+  }, [toast, assignedRollNumbers]);
 
   const onAutocompleteLoad = (autocomplete: google.maps.places.Autocomplete) => {
     autocompleteRef.current = autocomplete;
@@ -184,7 +198,7 @@ export function AddStopForm({ onStopAdded, isGoogleMapsLoaded, routes }: AddStop
                         <Combobox
                             options={students}
                             placeholder="Select student..."
-                            notFoundText="No student found."
+                            notFoundText="No unassigned students found."
                             value={field.value}
                             onChange={(value) => {
                                 const selectedStudent = students.find(s => s.value === value);
