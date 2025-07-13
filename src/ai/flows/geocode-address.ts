@@ -7,6 +7,10 @@
  * - GeocodeAddressInput - The input type for the geocodeAddress function.
  * - GeocodeAddressOutput - The return type for the geocodeAddress function.
  */
+import fetch from 'node-fetch';// Conditionally polyfill fetch if it's not available
+if (typeof globalThis.fetch === 'undefined') {
+  globalThis.fetch = fetch as any;
+}
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
