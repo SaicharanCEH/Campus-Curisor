@@ -241,12 +241,13 @@ export function AddStopForm({ onStopAdded, isGoogleMapsLoaded, routes }: AddStop
         
         <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-                <Label htmlFor="landmark">Landmark (Optional)</Label>
+                <Label htmlFor="landmark">Landmark</Label>
                 <Input
                 id="landmark"
                 placeholder="e.g., Near the big tree"
-                {...register('landmark' as const)}
+                {...register('landmark' as const, { required: 'Landmark is required' })}
                 />
+                {errors.landmark && <p className="text-destructive text-sm">{errors.landmark.message}</p>}
             </div>
             <div className="grid gap-2">
                 <Label htmlFor="time">Time</Label>
