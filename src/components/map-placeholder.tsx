@@ -58,7 +58,7 @@ export default function MapPlaceholder({
       <Marker
         position={defaultCenter}
         title="CVR College of Engineering"
-        animation={window.google.maps.Animation.DROP}
+        animation={window.google.maps.Animation.BOUNCE}
         icon={{
           url: 'https://maps.google.com/mapfiles/kml/shapes/university.png',
           scaledSize: new window.google.maps.Size(40, 40),
