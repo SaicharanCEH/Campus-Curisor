@@ -199,7 +199,7 @@ export function SignupForm({ onUserCreated }: SignupFormProps) {
             <Input
               id="phone-number"
               type="tel"
-              placeholder="9876543210"
+              placeholder="+91"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
             />
