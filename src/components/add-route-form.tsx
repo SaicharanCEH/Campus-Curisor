@@ -1,7 +1,8 @@
+
 'use client';
 
-import { useState } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useState, useRef, useCallback } from 'react';
+import { useFieldArray, useForm, Controller } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,13 +11,16 @@ import { X, PlusCircle } from 'lucide-react';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { ScrollArea } from './ui/scroll-area';
-import { geocodeAddress } from '@/ai/flows/geocode-address';
+import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
+
+const libraries: ('places' | 'drawing' | 'geometry' | 'localContext' | 'visualization')[] = ['places'];
 
 interface StopFormValues {
   rollNumber: string;
   studentName: string;
   location: string;
   time: string;
+  position: { lat: number; lng: number };
 }
 
 interface AddRouteFormValues {
@@ -34,14 +38,20 @@ interface AddRouteFormProps {
 export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const autocompleteRefs = useRef<google.maps.places.Autocomplete[]>([]);
 
-  const { register, control, handleSubmit, reset, formState: { errors } } = useForm<AddRouteFormValues>({
+  const { isLoaded, loadError } = useJsApiLoader({
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
+    libraries,
+  });
+
+  const { register, control, handleSubmit, reset, setValue, formState: { errors } } = useForm<AddRouteFormValues>({
     defaultValues: {
       name: '',
       busNumber: '',
       driverName: '',
       driverMobile: '',
-      stops: [{ rollNumber: '', studentName: '', location: '', time: '' }],
+      stops: [{ rollNumber: '', studentName: '', location: '', time: '', position: { lat: 0, lng: 0 } }],
     },
   });
 
@@ -50,33 +60,40 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
     name: 'stops',
   });
 
+  const onAutocompleteLoad = (index: number, autocomplete: google.maps.places.Autocomplete) => {
+    autocompleteRefs.current[index] = autocomplete;
+  };
+
+  const onPlaceChanged = (index: number) => {
+    const autocomplete = autocompleteRefs.current[index];
+    if (autocomplete) {
+      const place = autocomplete.getPlace();
+      if (place.geometry?.location) {
+        setValue(`stops.${index}.location`, place.formatted_address || '', { shouldValidate: true });
+        setValue(`stops.${index}.position`, {
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng(),
+        }, { shouldValidate: true });
+      }
+    }
+  };
+
   const onSubmit = async (data: AddRouteFormValues) => {
     setIsSubmitting(true);
     try {
-      const stopsWithPositions = await Promise.all(
-        data.stops.map(async (stop) => {
-          let position = { lat: 0, lng: 0 };
-          try {
-            const geocoded = await geocodeAddress({ address: stop.location });
-            position = { lat: geocoded.lat, lng: geocoded.lng };
-          } catch (error) {
-             toast({
-                variant: 'destructive',
-                title: 'Geocoding Failed',
-                description: `Could not find coordinates for "${stop.location}". Please check the address.`,
-              });
-            throw new Error('Geocoding failed');
-          }
-          return {
-            id: `${data.name.replace(/\s+/g, '-').toLowerCase()}-${stop.studentName.replace(/\s+/g, '-').toLowerCase()}-${Math.random().toString(36).substr(2, 5)}`,
-            studentName: stop.studentName,
-            rollNumber: stop.rollNumber,
-            location: stop.location,
-            time: stop.time,
-            position,
-          };
-        })
-      );
+      const stopsWithPositions = data.stops.map((stop) => {
+        if (!stop.position || stop.position.lat === 0 || stop.position.lng === 0) {
+          throw new Error(`Location for stop "${stop.location}" is not valid. Please select a location from the suggestions.`);
+        }
+        return {
+          id: `${data.name.replace(/\s+/g, '-').toLowerCase()}-${stop.studentName.replace(/\s+/g, '-').toLowerCase()}-${Math.random().toString(36).substr(2, 5)}`,
+          studentName: stop.studentName,
+          rollNumber: stop.rollNumber,
+          location: stop.location,
+          time: stop.time,
+          position: stop.position,
+        };
+      });
 
       const routeData = {
         name: data.name,
@@ -96,18 +113,17 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
       onRouteCreated?.();
     } catch (error) {
       console.error('Error adding route: ', error);
-      if (!(error instanceof Error && error.message.includes('Geocoding failed'))) {
-         toast({
-            variant: 'destructive',
-            title: 'Creation Error',
-            description: 'An error occurred while creating the route. Please try again.',
-        });
-      }
+      toast({
+        variant: 'destructive',
+        title: 'Creation Error',
+        description: error instanceof Error ? error.message : 'An error occurred while creating the route.',
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
-
+  
+  if (loadError) return <div>Error loading maps. Please try again.</div>;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="grid gap-6">
@@ -176,11 +192,32 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
                 </div>
                 <div className="col-span-12 sm:col-span-6">
                   <Label htmlFor={`stops.${index}.location`} className="text-xs">Location</Label>
-                   <Input
+                  {isLoaded ? (
+                    <Controller
+                        control={control}
+                        name={`stops.${index}.location`}
+                        rules={{ required: 'Location is required.' }}
+                        render={({ field: { onChange, value } }) => (
+                            <Autocomplete
+                                onLoad={(autocomplete) => onAutocompleteLoad(index, autocomplete)}
+                                onPlaceChanged={() => onPlaceChanged(index)}
+                                fields={['formatted_address', 'geometry.location']}
+                            >
+                                <Input
+                                    id={`stops.${index}.location`}
+                                    placeholder="e.g., Main Gate, VNRVJIET"
+                                    defaultValue={value}
+                                />
+                            </Autocomplete>
+                        )}
+                    />
+                  ) : (
+                    <Input
                       id={`stops.${index}.location`}
                       placeholder="e.g., Main Gate, VNRVJIET"
                       {...register(`stops.${index}.location` as const, { required: true })}
                     />
+                  )}
                 </div>
                 <div className="col-span-9 sm:col-span-4">
                   <Label htmlFor={`stops.${index}.time`} className="text-xs">Time</Label>
@@ -205,14 +242,14 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
         <Button
           type="button"
           variant="outline"
-          onClick={() => append({ rollNumber: '', studentName: '', location: '', time: '' })}
+          onClick={() => append({ rollNumber: '', studentName: '', location: '', time: '', position: {lat: 0, lng: 0} })}
         >
           <PlusCircle className="mr-2 h-4 w-4" />
           Add Stop
         </Button>
       </div>
 
-      <Button type="submit" disabled={isSubmitting}>
+      <Button type="submit" disabled={isSubmitting || !isLoaded}>
         {isSubmitting ? 'Creating Route...' : 'Create Route'}
       </Button>
     </form>
