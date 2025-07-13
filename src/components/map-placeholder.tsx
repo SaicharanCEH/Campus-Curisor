@@ -1,8 +1,8 @@
 
 'use client';
 
-import { GoogleMap, Marker } from '@react-google-maps/api';
-import { useCallback, useRef } from 'react';
+import { GoogleMap, Marker, Polyline } from '@react-google-maps/api';
+import { useCallback, useEffect, useRef } from 'react';
 import type { Bus as BusType, Route, Stop } from '@/types';
 
 interface MapPlaceholderProps {
@@ -24,6 +24,21 @@ const defaultCenter = {
   lng: 78.5961,
 };
 
+const polylineOptions = {
+    strokeColor: '#3F51B5', // Deep blue, matching primary color
+    strokeOpacity: 0.8,
+    strokeWeight: 4,
+    fillColor: '#3F51B5',
+    fillOpacity: 0.35,
+    clickable: false,
+    draggable: false,
+    editable: false,
+    visible: true,
+    radius: 30000,
+    zIndex: 1,
+};
+
+
 export default function MapPlaceholder({
   buses,
   selectedRoute,
@@ -36,6 +51,22 @@ export default function MapPlaceholder({
   const onLoad = useCallback((map: google.maps.Map) => {
     mapRef.current = map;
   }, []);
+  
+  useEffect(() => {
+    if (mapRef.current && selectedRoute && selectedRoute.stops.length > 1) {
+      const bounds = new window.google.maps.LatLngBounds();
+      selectedRoute.stops.forEach(stop => {
+        if(stop.position) {
+          bounds.extend(new window.google.maps.LatLng(stop.position.lat, stop.position.lng));
+        }
+      });
+      mapRef.current.fitBounds(bounds);
+    }
+  }, [selectedRoute]);
+
+  const routePath = selectedRoute?.stops
+    .filter(stop => stop.position)
+    .map(stop => stop.position);
 
   if (loadError) {
     return <p>Error loading map. Please check your API key and ensure it is configured correctly.</p>
@@ -91,6 +122,14 @@ export default function MapPlaceholder({
           }}
         />
       ))}
+      
+      {/* Route Polyline */}
+      {routePath && routePath.length > 1 && (
+        <Polyline
+          path={routePath}
+          options={polylineOptions}
+        />
+      )}
     </GoogleMap>
   );
 }
