@@ -45,6 +45,16 @@ export default function MapPlaceholder({
       zoom={15}
       onLoad={onLoad}
     >
+      {/* College Marker */}
+      <Marker
+        position={defaultCenter}
+        title="Campus"
+        icon={{
+          url: 'https://maps.google.com/mapfiles/kml/shapes/university.png',
+          scaledSize: new window.google.maps.Size(40, 40),
+        }}
+      />
+      
       {/* Bus Markers */}
       {buses.map((bus) => (
         <Marker
@@ -60,7 +70,7 @@ export default function MapPlaceholder({
 
       {/* Stop Markers */}
       {selectedRoute?.stops.map((stop) => (
-        <Marker
+        stop.position && <Marker
           key={stop.id}
           position={stop.position}
           onClick={() => onSelectStop(stop)}

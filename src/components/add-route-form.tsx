@@ -15,6 +15,8 @@ interface Stop {
   name: string;
   location: string;
   time: string;
+  lat: number;
+  lng: number;
 }
 
 interface AddRouteFormValues {
@@ -39,7 +41,7 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
       busNumber: '',
       driverName: '',
       driverMobile: '',
-      stops: [{ name: '', location: '', time: '' }],
+      stops: [{ name: '', location: '', time: '', lat: 0, lng: 0 }],
     },
   });
 
@@ -61,6 +63,10 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
           name: stop.name,
           location: stop.location,
           time: stop.time,
+          position: {
+            lat: Number(stop.lat),
+            lng: Number(stop.lng),
+          }
         })),
       };
 
@@ -133,7 +139,7 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
           <div className="space-y-4">
             {fields.map((field, index) => (
               <div key={field.id} className="grid grid-cols-12 gap-x-2 gap-y-2 p-3 border rounded-md relative">
-                <div className="col-span-12 sm:col-span-4">
+                <div className="col-span-12 sm:col-span-5">
                   <Label htmlFor={`stops.${index}.name`} className="text-xs">Stop Name</Label>
                   <Input
                     id={`stops.${index}.name`}
@@ -141,7 +147,7 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
                     {...register(`stops.${index}.name` as const, { required: true })}
                   />
                 </div>
-                <div className="col-span-6 sm:col-span-3">
+                <div className="col-span-12 sm:col-span-7">
                   <Label htmlFor={`stops.${index}.location`} className="text-xs">Location</Label>
                   <Input
                     id={`stops.${index}.location`}
@@ -149,7 +155,27 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
                     {...register(`stops.${index}.location` as const, { required: true })}
                   />
                 </div>
+                 <div className="col-span-6 sm:col-span-3">
+                  <Label htmlFor={`stops.${index}.lat`} className="text-xs">Latitude</Label>
+                  <Input
+                    id={`stops.${index}.lat`}
+                    type="number"
+                    step="any"
+                    placeholder="e.g., 17.1966"
+                    {...register(`stops.${index}.lat` as const, { required: true, valueAsNumber: true })}
+                  />
+                </div>
                 <div className="col-span-6 sm:col-span-3">
+                  <Label htmlFor={`stops.${index}.lng`} className="text-xs">Longitude</Label>
+                  <Input
+                    id={`stops.${index}.lng`}
+                    type="number"
+                    step="any"
+                    placeholder="e.g., 78.5961"
+                    {...register(`stops.${index}.lng` as const, { required: true, valueAsNumber: true })}
+                  />
+                </div>
+                <div className="col-span-6 sm:col-span-4">
                   <Label htmlFor={`stops.${index}.time`} className="text-xs">Time</Label>
                   <Input
                     id={`stops.${index}.time`}
@@ -157,7 +183,7 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
                     {...register(`stops.${index}.time` as const, { required: true })}
                   />
                 </div>
-                <div className="col-span-12 sm:col-span-2 flex items-end">
+                <div className="col-span-6 sm:col-span-2 flex items-end">
                     {fields.length > 1 && (
                      <Button type="button" variant="destructive" size="icon" className="h-9 w-9" onClick={() => remove(index)}>
                         <X className="h-4 w-4" />
@@ -172,7 +198,7 @@ export function AddRouteForm({ onRouteCreated }: AddRouteFormProps) {
         <Button
           type="button"
           variant="outline"
-          onClick={() => append({ name: '', location: '', time: '' })}
+          onClick={() => append({ name: '', location: '', time: '', lat: 0, lng: 0 })}
         >
           <PlusCircle className="mr-2 h-4 w-4" />
           Add Stop

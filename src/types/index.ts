@@ -3,6 +3,7 @@ export interface Stop {
   name: string;
   location: string;
   time: string;
+  position: { lat: number; lng: number };
 }
 
 export interface Route {
